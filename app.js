@@ -29,10 +29,17 @@ app.get("/booking", async (req,res)=>{
     } catch (err) {
         res.json({ message: err });
     }
+});
+
+app.get("/hotel", async (req,res)=>{
+    try {
+        const hotel = await Product.find();
+        res.json(hotel);
+    } catch (err) {
+        res.json({ message: err });
+    }
   
   });
-
-
 
 // post
 
