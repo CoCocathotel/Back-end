@@ -38,7 +38,15 @@ app.get("/hotel", async (req,res)=>{
     } catch (err) {
         res.json({ message: err });
     }
-  
+  });
+
+app.get("/", async (req,res)=>{
+    try {
+        const user = await User.find();
+        res.json(user);
+    } catch (err) {
+        res.json({ message: err });
+    }
   });
 
 // post
