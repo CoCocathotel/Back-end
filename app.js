@@ -17,20 +17,15 @@ app.use(express.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-
-
-app.get("/purchase", (req,res)=>{
-    Booking.find({}, (err, bookings) => {
-        if (err) {
-            res.status(500).send("Internal Server Error");
-        } else {
-            res.status(200).json(bookings);
-        }
-    });
-});
-
-
-
+app.get("/", async (req,res)=>{
+    try {
+        const bookings = await Booking.find();
+        res.json(bookings);
+    } catch (err) {
+        res.json({ message: err });
+    }
+  
+  });
 
 
 app.post("/register", async (req,res)=>{
