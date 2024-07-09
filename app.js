@@ -17,8 +17,6 @@ app.use(express.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-
-
 app.post("/register", async (req,res)=>{
 
     try{
@@ -174,6 +172,59 @@ app.post('/purchase', auth, upload.single('image'), async (req, res) => {
         const booking = await Booking.create({ room, email, cin, cout, camerasBooked, image: base64Image });
         cameraData.camera -= camerasBooked;
         await cameraData.save();
+        await booking.save();
+
+        res.status(200).json(booking);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.post('/pay', auth, async (req, res) => {
+    try {
+        const { booking_id, image } = req.body;
+
+        if (!booking_id) {
+            return res.status(400).send("Booking ID is required");
+        }
+
+        const booking = await Booking.findById(booking_id);
+        if (!booking) {
+            return res.status(404).send("Booking not found");
+        }
+
+        if (booking.image === 'paid') {
+            return res.status(400).send("Booking already paid");
+        }
+
+        booking.image = image;
+        await booking.save();
+
+        res.status(200).json(booking);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
+// admin
+
+app.post('/paid', async (req, res) => {
+    try {
+        const { booking_id } = req.body;
+
+        if (!booking_id) {
+            return res.status(400).send("Booking ID is required");
+        }
+
+        const booking = await Booking.findById(booking_id);
+        if (!booking) {
+            return res.status(404).send("Booking not found");
+        }
+
+        booking.status = 'paid';
         await booking.save();
 
         res.status(200).json(booking);
