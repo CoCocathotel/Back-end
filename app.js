@@ -17,7 +17,12 @@ app.use(express.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.get("/", async (req,res)=>{
+
+// get
+
+
+  
+app.get("/booking", async (req,res)=>{
     try {
         const bookings = await Booking.find();
         res.json(bookings);
@@ -27,6 +32,9 @@ app.get("/", async (req,res)=>{
   
   });
 
+
+
+// post
 
 app.post("/register", async (req,res)=>{
 
