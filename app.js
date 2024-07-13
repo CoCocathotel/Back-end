@@ -1,6 +1,7 @@
 require('dotenv').config();
 require('./config/database').connect();
 const express = require('express');
+const cors = require('cors');
 const User = require('./model/user');
 const bcrypt = require('bcryptjs');
 const jwt = require ('jsonwebtoken');
@@ -12,6 +13,7 @@ const multer = require('multer');
 
 const app = express();
 
+app.use(cors())
 app.use(express.json());
 
 const storage = multer.memoryStorage();
@@ -148,6 +150,30 @@ app.post('/camera', auth, async (req, res) => {
     }
 });
 
+app.put('/updateCameraCount', auth, async (req, res) => {
+    try {
+        const { cameraCount } = req.body;
+
+        if (cameraCount === undefined || cameraCount < 0) {
+            return res.status(400).send("Valid camera count is required");
+        }
+
+        const cameraData = await Camera.findOne();
+        if (!cameraData) {
+            return res.status(404).send("Camera data not found");
+        }
+
+        cameraData.camera = cameraCount;
+        await cameraData.save();
+
+        res.status(200).json(cameraData);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
 app.post('/products', auth, async (req, res) => {
     try {
         const { name, price, type, description } = req.body;
@@ -241,6 +267,7 @@ app.post('/pay', auth, async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+
 
 
 // admin
