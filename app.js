@@ -10,11 +10,17 @@ const Product = require('./model/product');
 const Booking = require('./model/booking');
 const Camera = require('./model/camera');
 const multer = require('multer'); 
+const bodyParser = require('body-parser'); 
 
 const app = express();
 
 app.use(cors())
+
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(express.json());
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -25,6 +31,15 @@ const upload = multer({ storage: storage });
 
   
 app.get("/booking", async (req,res)=>{
+    try {
+        const bookings = await Booking.find();
+        res.json(bookings);
+    } catch (err) {
+        res.json({ message: err });
+    }
+});
+
+app.post("/booking", async (req,res)=>{
     try {
         const bookings = await Booking.find();
         res.json(bookings);
@@ -176,13 +191,13 @@ app.put('/updateCameraCount', auth, async (req, res) => {
 
 app.post('/products', auth, async (req, res) => {
     try {
-        const { name, price, type, description } = req.body;
+        const { name, price, type, description, image } = req.body;
 
         if (!(name && price > 0 && type && description)) {
             return res.status(400).send("All input is required and stock must be a non-negative number");
         }
 
-        const product = await Product.create({ name, price, type, description});
+        const product = await Product.create({ name, price, type, description, image});
 
         res.status(201).json(product);
 
