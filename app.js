@@ -206,10 +206,10 @@ app.post('/products', auth, async (req, res) => {
     }
 });
 
-app.post('/purchase', auth, upload.single('image'), async (req, res) => {
+app.post('/purchase', auth, async (req, res) => {
     try {
-        const { product_id, email, cin, cout, camerasBooked } = req.body;
-        const { file } = req;
+        const { product_id, image, email, cin, cout, camerasBooked, pay_way } = req.body;
+        // const { file } = req;
 
         if (!(product_id)) {
             return res.status(400).send("Product ID and camerasBooked are required");
@@ -243,8 +243,9 @@ app.post('/purchase', auth, upload.single('image'), async (req, res) => {
             return res.status(400).send("No cameras available");
         }
 
-        const base64Image = file ? file.buffer.toString('base64') : null;
-        const booking = await Booking.create({ room, email, cin, cout, camerasBooked, image: base64Image });
+        // const base64Image = image ? image.buffer.toString('base64') : null;
+     
+        const booking = await Booking.create({ room, email, cin, cout, pay_way, camerasBooked, image });
         cameraData.camera -= camerasBooked;
         await cameraData.save();
         await booking.save();

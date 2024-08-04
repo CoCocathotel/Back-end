@@ -5,6 +5,8 @@ const bookingSchema = new mongoose.Schema({
     email: { type: String },
     cin: { type: Date, default: Date.now },
     cout: { type: Date },
+    status: { type: String, default: 'pending' },
+    pay_way: { type: String, required: true },
     camerasBooked: { type: Number, required: true },
     image: { type: String }
 });
