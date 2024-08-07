@@ -7,8 +7,8 @@ const bookingSchema = new mongoose.Schema({
     cout: { type: Date },
     status: { type: String, default: 'pending' },
     pay_way: { type: String, required: true },
-    camerasBooked: { type: Number, required: true },
+    camerasBooked: { type: String, default: "" },
     image: { type: String }
-});
+}); 
 
 module.exports = mongoose.model('Booking', bookingSchema);
