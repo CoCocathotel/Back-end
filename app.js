@@ -30,10 +30,57 @@ const upload = multer({ storage: storage });
 
 
   
-app.get("/booking", async (req,res)=>{
+app.post("/find_room", async (req,res)=>{
     try {
-        const bookings = await Booking.find();
-        res.json(bookings);
+       const {cin, cout} = req.body;
+      
+        // แสดงห้องที่ว่างตามช่วงเวลาที่ส่งมาว่าว่างหรือไม่
+        const bookings = await Booking.find({
+            $or: [
+                { cin: { $lt: cout, $gte: cin } },
+                { cout: { $gt: cin, $lte: cout } },
+                { cin: { $lte: cin }, cout: { $gte: cout } }
+            ]
+        });
+
+        const rooms = await Product.find();
+        const availableRooms = rooms.filter(room => {
+            const roomBookings = bookings.filter(booking => booking.room === room.name);
+            return roomBookings.length === 0;
+        });
+
+        res.json(availableRooms);
+
+    } catch (err) {
+        res.json({ message: err });
+    }
+});
+
+app.post("/find_room/:name", async (req,res)=>{
+    try {
+       const {cin, cout} = req.body;
+      
+       const room = await Product.find({name: req.params.name});
+        
+    //    หาว่าห้องที่ส่งมาว่าว่างหรือไม่
+         const bookings = await Booking.find({
+              room: room[0].name,
+              $or: [
+                { cin: { $lt: cout, $gte: cin } },
+                { cout: { $gt: cin, $lte: cout } },
+                { cin: { $lte: cin }, cout: { $gte: cout } }
+              ]
+         });
+    
+         if (bookings.length === 0) {
+              res.json({ err: "" });
+         } else {
+              res.json({ err: "Room is not available" });
+         }
+
+     
+         
+
     } catch (err) {
         res.json({ message: err });
     }
@@ -48,6 +95,21 @@ app.post("/booking", async (req,res)=>{
     }
 });
 
+// หา hotel ที่ _id ตรงกับที่ส่งมา
+app.get("/hotel/:_id", async (req, res) => {
+     
+    try {
+        const hotel = await Product.findById(req.params._id);
+        // console.log(hotel);
+        res.json(hotel);
+    } catch (err) {
+        res.json({ message: err});
+    }
+});
+ 
+
+
+
 app.get("/hotel", async (req,res)=>{
     try {
         const hotel = await Product.find();
@@ -57,14 +119,7 @@ app.get("/hotel", async (req,res)=>{
     }
   });
 
-app.get("/", async (req,res)=>{
-    try {
-        const user = await User.find();
-        res.json(user);
-    } catch (err) {
-        res.json({ message: err });
-    }
-  });
+ 
 
 // post
 
@@ -188,7 +243,7 @@ app.put('/updateCameraCount', auth, async (req, res) => {
     }
 });
 
-
+//create
 app.post('/products', auth, async (req, res) => {
     try {
         const { name, price, type, description, image } = req.body;
@@ -206,6 +261,7 @@ app.post('/products', auth, async (req, res) => {
     }
 });
 
+//booking
 app.post('/purchase', auth, async (req, res) => {
     try {
         const { product_id, image, email, cin, cout, camerasBooked, pay_way } = req.body;
