@@ -50,9 +50,9 @@ app.post("/find_room", async (req, res) => {
 
     const bookings = await Booking.find({
       $or: [
-        { cin: { $lt: endOfCin, $gte: startOfCin } },
+        { cin: { $lt: endOfCout, $gte: startOfCin } },
         { cout: { $gt: startOfCin, $lte: endOfCout } },
-        { cin: { $lte: startOfCout }, cout: { $gte: endOfCout } },
+        { cin: { $lte: startOfCin }, cout: { $gte: endOfCout } },
       ],
     });
 
@@ -361,13 +361,6 @@ app.post("/check_cam", async (req, res) => {
         let Old_End = cameras[i].cout;
         let Start = cin_n;
         let End = cout_n;
-
-        // if(Start > Old_start && End < Old_End ) Found it!
-
-        // if(Start > Old_start && End < Old_End) Found it !
-
-        // If(Start  < Old_End &&  End > Old_End ) Found it !
-
         if (
           (Start >= Old_start &&
             Start <= Old_End &&
@@ -383,15 +376,7 @@ app.post("/check_cam", async (req, res) => {
             End >= Old_End)
         ) {
           arr2.push(cameras[i].camera);
-          console.log("Ok");
         }
-
-        // console.log({
-        //     "Start" :Start,
-        //     "End":End,
-        //     "Old_Start": Old_start,
-        //     "Old_End": Old_End,
-        //   });
       }
       for (let i = 0; i < arr.length; i++) {
         if (!arr2.includes(arr[i])) {
@@ -399,12 +384,12 @@ app.post("/check_cam", async (req, res) => {
           //   console.log(arr[i]);
         }
       }
-      console.log({ arr: arr, arr2: arr2, arr3: arr3 });
 
       if (arr3.length == 0) {
-        return res.status(400).send({ arr: arr, arr2: arr2, arr3: arr3 });
+        return res.status(404).send({message: "All camera is booked"});
+      }else{
+        res.status(201).json({ message: ""});
       }
-      res.status(201).json({ message: arr3[0] });
     } catch (err) {
       res.json({ message: err });
     }
@@ -540,10 +525,8 @@ app.post("/purchase", auth, async (req, res) => {
       image,
     });
 
-    const cin_n = new Date(cin);
-    const cout_n = new Date(cout);
-
-    let availableCameras = [];
+  
+    // let availableCameras = [];
 
     //   const cameras = await Book_Camera.find();
     //   const cam_products = await Camera.find();
@@ -565,6 +548,10 @@ app.post("/purchase", auth, async (req, res) => {
       let arr2 = [];
       let arr3 = [];
 
+      const cin_n = new Date(cin);
+      const cout_n = new Date(cout);
+  
+
       const cameras = await Book_Camera.find();
       const cam_product = await Camera.find();
 
@@ -573,22 +560,33 @@ app.post("/purchase", auth, async (req, res) => {
       }
 
       for (let i = 0; i < cameras.length; i++) {
+        let Old_start = cameras[i].cin;
+        let Old_End = cameras[i].cout;
+        let Start = cin_n;
+        let End = cout_n;
+
         if (
-          cameras[i].cin.toLocaleDateString() <= cout_n.toLocaleDateString() &&
-          cameras[i].cout.toLocaleDateString() >= cin_n.toLocaleDateString()
+          (Start >= Old_start &&
+            Start <= Old_End &&
+            End >= Old_start &&
+            End <= Old_End) ||
+          (Start <= Old_start &&
+            Start <= Old_End &&
+            End >= Old_start &&
+            End <= Old_End) ||
+          (Start >= Old_start &&
+            Start <= Old_End &&
+            End >= Old_start &&
+            End >= Old_End)
         ) {
           arr2.push(cameras[i].camera);
+          console.log("Ok");
         }
-        // console.log({
-        //   "cameras[i].camera": cameras[i].camera,
-        //   "cameras[i].cin": cameras[i].cin,
-        //   "cameras[i].cout": cameras[i].cout,
-        // });
       }
-
       for (let i = 0; i < arr.length; i++) {
         if (!arr2.includes(arr[i])) {
           arr3.push(arr[i]);
+          //   console.log(arr[i]);
         }
       }
 
@@ -609,7 +607,7 @@ app.post("/purchase", auth, async (req, res) => {
 
       booking.camerasBooked = newCam._id;
       await booking.save();
-      console.log({ arr: arr, arr2: arr2, arr3: arr3 });
+    //   console.log({ arr: arr, arr2: arr2, arr3: arr3 });
       res.status(201).json({ arr: arr, arr2: arr2, arr3: arr3 });
     } else {
       await booking.save();
