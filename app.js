@@ -2,676 +2,193 @@ require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
 const cors = require("cors");
+const AWS = require("aws-sdk");
+
 const User = require("./model/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("./middleware/auth");
-const Product = require("./model/product");
 const Booking = require("./model/booking");
 const Camera = require("./model/camera");
 const Book_Camera = require("./model/booking_cam");
 const multer = require("multer");
 const bodyParser = require("body-parser");
-const product = require("./model/product");
+const Room = require("./model/room");
+
+const { createClient } = require('@supabase/supabase-js');
+const { type } = require("express/lib/response");
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// const s3 = new AWS.S3({
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//     region: process.env.AWS_REGION,
+//     endpoint_url : process.env.AWS_ENDPOINT_URL
+// });
+
+
 
 const app = express();
 
 app.use(cors());
 
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
+app.use(bodyParser.json({ limit: "5mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
 app.use(express.json());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// get
-app.get("/booking", async (req, res) => {
-  try {
-    const bookings = await Booking.find();
-    res.json(bookings);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
 
-app.post("/find_room", async (req, res) => {
-  try {
-    const { cin, cout } = req.body;
-
-    const cinDate = new Date(cin);
-    const coutDate = new Date(cout);
-
-    const startOfCin = new Date(cinDate.setHours(0, 0, 0, 0));
-    const endOfCin = new Date(cinDate.setHours(23, 59, 59, 999));
-    const startOfCout = new Date(coutDate.setHours(0, 0, 0, 0));
-    const endOfCout = new Date(coutDate.setHours(23, 59, 59, 999));
-
-    const bookings = await Booking.find({
-      $or: [
-        { cin: { $lt: endOfCout, $gte: startOfCin } },
-        { cout: { $gt: startOfCin, $lte: endOfCout } },
-        { cin: { $lte: startOfCin }, cout: { $gte: endOfCout } },
-      ],
-    });
-
-    const rooms = await Product.find();
-    const availableRooms = rooms.filter((room) => {
-      const roomBookings = bookings.filter(
-        (booking) => booking.room === room.name
-      );
-      return roomBookings.length === 0;
-    });
-
-    res.json(availableRooms);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.post("/find_room/:name", async (req, res) => {
-  try {
-    const { cin, cout } = req.body;
-
-    // Convert cin and cout to Date objects and strip the time part
-    const cinDate = new Date(cin);
-    const coutDate = new Date(cout);
-
-    // Set time to 00:00:00.000 for cin and 23:59:59.999 for cout
-    const startOfCin = new Date(cinDate.setHours(0, 0, 0, 0));
-    const endOfCin = new Date(cinDate.setHours(23, 59, 59, 999));
-    const startOfCout = new Date(coutDate.setHours(0, 0, 0, 0));
-    const endOfCout = new Date(coutDate.setHours(23, 59, 59, 999));
-
-    const room = await Product.findOne({ name: req.params.name });
-
-    if (!room) {
-      return res.json({ err: "Room not found" });
+app.get("/v1/room", async (req, res) => {
+    try {
+        const room = await Room.find();
+        res.status(200).json({data: room});
+    } catch (err) {
+        res.json({ message: err });
     }
-
-    // const bookings = await Booking.find({
-    //   room: room.name,
-    //   $or: [
-    //     { cin: { $lt: endOfCout, $gte: startOfCin } },
-    //     { cout: { $gt: startOfCin, $lte: endOfCout } },
-    //     { cin: { $lte: startOfCin }, cout: { $gte: endOfCout } },
-    //   ],
-    // });
-
-    const bookings = await Booking.find({
-      room: room.name,
-      $or: [
-        { cin: { $lt: endOfCin, $gte: startOfCin } },
-        { cout: { $gt: startOfCin, $lte: endOfCout } },
-        { cin: { $lte: startOfCout }, cout: { $gte: endOfCout } },
-      ],
-    });
-
-    if (bookings.length === 0) {
-      res.json({ err: "" });
-    } else {
-      res.json({ err: "Room is not available" });
-    }
-  } catch (err) {
-    res.json({ message: err });
-  }
 });
 
-app.post("/booking", async (req, res) => {
-  try {
-    const bookings = await Booking.find();
-    res.json(bookings);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
+app.get("/v2/superbase", async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .storage
+            .from('rooms')
+            .list('', {
+                limit: 100,
+                offset: 0,
+                sortBy: { column: 'name', order: 'asc' },
+            })
 
-// หา hotel ที่ _id ตรงกับที่ส่งมา
-app.get("/hotel/:_id", async (req, res) => {
-  try {
-    const hotel = await Product.findById(req.params._id);
-    // console.log(hotel);
-    res.json(hotel);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/hotel", async (req, res) => {
-  try {
-    const hotel = await Product.find();
-    res.json(hotel);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-// post
-
-app.post("/register", async (req, res) => {
-  try {
-    const { first_name, last_name, email, password } = req.body;
-
-    if (!(email && password && first_name && last_name)) {
-      res.status(400).send("All input is requried");
-    }
-
-    const oldUser = await User.findOne({ email });
-
-    if (oldUser) {
-      return res.status(409).send("User already exist. please login");
-    }
-
-    encryptedPassword = await bcrypt.hash(password, 10);
-    console.log(encryptedPassword);
-
-    const user = await User.create({
-      first_name,
-      last_name,
-      email: email.toLowerCase(),
-      password: encryptedPassword,
-    });
-
-    const token = jwt.sign(
-      { user_id: user._id, email },
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "2h",
-      }
-    );
-
-    user.token = token;
-
-    res.status(201).json(user);
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!(email && password)) {
-      return res.status(400).send("All input is required");
-    }
-
-    const user = await User.findOne({ email });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const token = jwt.sign(
-        { user_id: user._id, email },
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "1h",
+        if (error) {
+            return res.status(400).send("Error searching for folders");
         }
-      );
+        const room = data.map(room => room.name);
+        
+        // get img in room superbase
 
-      user.token = token;
-      await user.save();
+        let img_data = [];
+        for(let i = 0; i < room.length; i++){
+            const { data, error } = await supabase
+            .storage
+            .from('rooms')
+            .list(room[i], {
+                limit: 100,
+                offset: 0,
+                sortBy: { column: 'name', order: 'asc' },
+            })
 
-      res.status(200).json(user);
-    } else {
-      res.status(400).send("Invalid Credentials");
+            if (error) {
+                return res.status(400).send("Error searching for folders");
+            }
+            const img = data.map(img => img.name);
+            let imgjsn = {type: room[i], img: img};
+
+            img_data.push(imgjsn);
+        }
+        res.status(200).json(img_data);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-  } catch (err) {
-    console.log(err);
-  }
 });
 
-app.post("/welcome", auth, (req, res) => {
-  res.status(200).send("Welcome");
+app.post("/v1/superbase", async (req, res) => {
+    try {
+        const { type } = req.body;
+        const { data, error } = await supabase
+            .storage
+            .from('rooms')
+            .list(type, {
+                limit: 100,
+                offset: 0,
+                sortBy: { column: 'name', order: 'asc' },
+            })
+
+        if (error) {
+            return res.status(400).send("Error searching for folders");
+        }
+        const room = data.map(room => "/" + type + "/" + room.name);
+        res.status(200).json(room);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
-app.post("/camera", auth, async (req, res) => {
-  try {
-    const { camera, brand, model } = req.body;
+app.post("/v1/create_room", async (req, res) => {
+    try {
+        const { room_name, type, price, image, description, cameras, size, number_of_cats, number_of_rooms } = req.body;
 
-    if (camera === undefined) {
-      return res.status(400).send("Camera count is required");
-    }
+        if (!(room_name && type && price && image && description && cameras && size && number_of_cats && number_of_rooms)) {
+            return res.status(400).send("All input is required");
+        }
 
-    const newCamera = await Camera.create({ camera, brand, model });
+        const { data: folders, error: listError } = await supabase
+            .storage
+            .from('rooms')
+            .list('', { recursive: true });
 
-    res.status(201).json(newCamera);
-  } catch (err) {
-    console.log(err);
-  }
-});
+        if (listError) {
+            return res.status(400).send("Error searching for folders");
+        }
 
-app.put("/updateCameraCount", auth, async (req, res) => {
-  try {
-    const { cameraCount } = req.body;
+        const folderExists = folders.some(folder => folder.name === room_name);
 
-    if (cameraCount === undefined || cameraCount < 0) {
-      return res.status(400).send("Valid camera count is required");
-    }
+        if (folderExists) {
+            return res.status(400).send("A folder with this room name already exists");
+        }
 
-    const cameraData = await Camera.findOne();
-    if (!cameraData) {
-      return res.status(404).send("Camera data not found");
-    }
+        let imageBase64 = [];
 
-    cameraData.camera = cameraCount;
-    await cameraData.save();
+        for (let i = 0; i < image.length; i++) {
+            const base64Data = image[i].replace(/^data:image\/\w+;base64,/, "");
+            const buf = Buffer.from(base64Data, "base64");
+            const imageName = `${i}.png`;
 
-    res.status(200).json(cameraData);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
-  }
-});
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("rooms")
+                .upload(`${type}/${imageName}`, buf, {
+                    cacheControl: '3600',
+                    upsert: false,
+                    contentType: 'image/png',
+                    contentEncoding: 'base64',
+                });
 
-//create
-app.post("/products", auth, async (req, res) => {
-  try {
-    const { name, price, type, description, image } = req.body;
+            if (uploadError) {
+                return res.status(400).send("Error uploading image");
+            } else {
+                imageBase64.push(imageName);
+            }
+            console.log(uploadData);
+        }
 
-    if (!(name && price > 0 && type && description)) {
-      return res
-        .status(400)
-        .send("All input is required and stock must be a non-negative number");
-    }
+        if (imageBase64.length !== image.length) {
+            return res.status(400).send("Error uploading image");
+        }
 
-    const product = await Product.create({
-      name,
-      price,
-      type,
-      description,
-      image,
-    });
 
-    res.status(201).json(product);
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-app.get("/v1/cam_test", async (req, res) => {
-  const cin = new Date("2024-08-07T07:54:34.000Z");
-  const cout = new Date("2024-08-07T07:54:34.000Z");
-  console.log({ cin: cin, cout: cout });
-  try {
-    let arr = [];
-    let arr2 = [];
-    let arr3 = [];
-    const cameras = await Book_Camera.find();
-    const cam_product = await Camera.find();
-
-    for (let i = 0; i < cam_product.length; i++) {
-      arr2.push(cam_product[i].camera);
-    }
-    for (let i = 0; i < cameras.length; i++) {
-      if (cameras[i].cin <= cout && cameras[i].cout >= cin) {
-        arr.push(cameras[i].camera);
-        console.log({
-          "cameras[i].camera": cameras[i].camera,
-          "cameras[i].cin": cameras[i].cin,
-          "cameras[i].cout": cameras[i].cout,
+        const room = await Room.create({
+            room_name,
+            type,
+            price,
+            image: imageBase64,
+            description,
+            cameras,
+            size,
+            number_of_cats,
+            number_of_rooms,
         });
-      }
-    }
 
-    for (let i = 0; i < arr2.length; i++) {
-      if (!arr.includes(arr2[i])) {
-        arr3.push(arr2[i]);
-      }
-    }
+        res.status(201).json("Room created successfully");
 
-    // res.json(arr3[0]);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/v2/cam_test", async (req, res) => {
-  try {
-    const cameras = await Book_Camera.find();
-    res.json(cameras);
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.post("/check_cam", async (req, res) => {
-  try {
-    const { email, cin, cout, booking } = req.body;
-
-    if (!(email && cin && cout && booking)) {
-      return res.status(400).send("All input is required");
-    }
-
-    try {
-      const cin_n = new Date(cin);
-      const cout_n = new Date(cout);
-      let arr = [];
-      let arr2 = [];
-      let arr3 = [];
-
-      const cameras = await Book_Camera.find();
-      const cam_product = await Camera.find();
-
-      for (let i = 0; i < cam_product.length; i++) {
-        arr.push(cam_product[i].camera);
-      }
-
-      for (let i = 0; i < cameras.length; i++) {
-        let Old_start = cameras[i].cin;
-        let Old_End = cameras[i].cout;
-        let Start = cin_n;
-        let End = cout_n;
-        if (
-          (Start >= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End <= Old_End) ||
-          (Start <= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End <= Old_End) ||
-          (Start >= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End >= Old_End)
-        ) {
-          arr2.push(cameras[i].camera);
-        }
-      }
-      for (let i = 0; i < arr.length; i++) {
-        if (!arr2.includes(arr[i])) {
-          arr3.push(arr[i]);
-          //   console.log(arr[i]);
-        }
-      }
-
-      if (arr3.length == 0) {
-        return res.status(404).send({message: "All camera is booked"});
-      }else{
-        res.status(201).json({ message: ""});
-      }
     } catch (err) {
-      res.json({ message: err });
+        res.json({ message: err });
     }
-  } catch (err) {
-    console.log(err);
-  }
 });
 
-app.post("/create_cam", async (req, res) => {
-  try {
-    const { email, cin, cout, booking } = req.body;
-
-    if (!(email && cin && cout && booking)) {
-      return res.status(400).send("All input is required");
-    }
-
-    try {
-      const cin_n = new Date(cin);
-      const cout_n = new Date(cout);
-      let arr = [];
-      let arr2 = [];
-      let arr3 = [];
-
-      const cameras = await Book_Camera.find();
-      const cam_product = await Camera.find();
-
-      for (let i = 0; i < cam_product.length; i++) {
-        arr.push(cam_product[i].camera);
-      }
-
-      for (let i = 0; i < cameras.length; i++) {
-        if (cameras[i].cin <= cout_n && cameras[i].cout >= cin_n) {
-          arr2.push(cameras[i].camera);
-          console.log({
-            "cameras[i].camera": cameras[i].camera,
-            "cameras[i].cin": cameras[i].cin,
-            "cameras[i].cout": cameras[i].cout,
-          });
-        }
-      }
-
-      for (let i = 0; i < arr.length; i++) {
-        if (!arr2.includes(arr[i])) {
-          arr3.push(arr[i]);
-        }
-      }
-
-      if (arr3.length == 0) {
-        return res.status(400).send("All camera is booked");
-      }
-
-      let camera = arr3[0];
-
-      const newCam = await Book_Camera.create({
-        camera,
-        email,
-        cin,
-        cout,
-        booking,
-      });
-
-      res.status(201).json({ message: "Camera is booked", camera: camera });
-    } catch (err) {
-      res.json({ message: err });
-    }
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-app.post("/purchase", auth, async (req, res) => {
-  try {
-    const { product_id, image, email, cin, cout, camerasBooked, pay_way } =
-      req.body;
-
-    if (!product_id) {
-      return res.status(400).send("Product ID and camerasBooked are required");
-    }
-
-    if (!email || !cin || !cout) {
-      return res
-        .status(400)
-        .send("Email, check-in date, and check-out date are required");
-    }
-
-    //   if (new Date(cin) >= new Date(cout)) {
-    //     return res.status(400).send("Check-in date must be before check-out date");
-    //   }
-
-    const product = await Product.findById(product_id);
-    if (!product) {
-      return res.status(404).send("Product not found");
-    }
-
-    const cinDate = new Date(cin);
-    const coutDate = new Date(cout);
-
-    const startOfCin = new Date(cinDate.setHours(0, 0, 0, 0));
-    const endOfCin = new Date(cinDate.setHours(23, 59, 59, 999));
-    const startOfCout = new Date(coutDate.setHours(0, 0, 0, 0));
-    const endOfCout = new Date(coutDate.setHours(23, 59, 59, 999));
-
-    const bookings = await Booking.find({
-      $or: [
-        { cin: { $lt: endOfCin, $gte: startOfCin } },
-        { cout: { $gt: startOfCin, $lte: endOfCout } },
-        { cin: { $lte: startOfCout }, cout: { $gte: endOfCout } },
-      ],
-    });
-
-    const room = product.name;
-
-    const rooms = await Product.find();
-    const availableRooms = rooms.filter((room) => {
-      const roomBookings = bookings.filter(
-        (booking) => booking.room === room.name
-      );
-      return roomBookings.length === 0;
-    });
-
-    // console.log(availableRooms);
-    //   if (availableRooms.length > 0) {
-    //     return res.status(409).send("This period cannot be reserved.");
-    //   }
-
-    const booking = await Booking.create({
-      room,
-      email,
-      cin,
-      cout,
-      pay_way,
-      camerasBooked,
-      image,
-    });
-
-  
-    // let availableCameras = [];
-
-    //   const cameras = await Book_Camera.find();
-    //   const cam_products = await Camera.find();
-
-    //   const allCameras = cam_products.map(cam => cam.camera);
-    //   const bookedCameras = cameras.filter(camera => camera.cin <= cout_n && camera.cout >= cin_n)
-    //                                 .map(camera => camera.camera);
-
-    //   availableCameras = allCameras.filter(cam => !bookedCameras.includes(cam));
-
-    //   if (availableCameras.length === 0) {
-    //     return res.status(400).send("All cameras are booked");
-    //   }
-
-    // const cin_n = new Date(cin);
-    //   const cout_n = new Date(cout);
-    if (camerasBooked != "") {
-      let arr = [];
-      let arr2 = [];
-      let arr3 = [];
-
-      const cin_n = new Date(cin);
-      const cout_n = new Date(cout);
-  
-
-      const cameras = await Book_Camera.find();
-      const cam_product = await Camera.find();
-
-      for (let i = 0; i < cam_product.length; i++) {
-        arr.push(cam_product[i].camera);
-      }
-
-      for (let i = 0; i < cameras.length; i++) {
-        let Old_start = cameras[i].cin;
-        let Old_End = cameras[i].cout;
-        let Start = cin_n;
-        let End = cout_n;
-
-        if (
-          (Start >= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End <= Old_End) ||
-          (Start <= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End <= Old_End) ||
-          (Start >= Old_start &&
-            Start <= Old_End &&
-            End >= Old_start &&
-            End >= Old_End)
-        ) {
-          arr2.push(cameras[i].camera);
-          console.log("Ok");
-        }
-      }
-      for (let i = 0; i < arr.length; i++) {
-        if (!arr2.includes(arr[i])) {
-          arr3.push(arr[i]);
-          //   console.log(arr[i]);
-        }
-      }
-
-      if (arr3.length == 0) {
-        return res.status(400).send("All camera is booked");
-      }
-
-      await booking.save();
-      const booking_id = booking._id;
-
-      const newCam = await Book_Camera.create({
-        camera: arr3[0],
-        email,
-        cin,
-        cout,
-        booking: booking_id,
-      });
-
-      booking.camerasBooked = newCam._id;
-      await booking.save();
-    //   console.log({ arr: arr, arr2: arr2, arr3: arr3 });
-      res.status(201).json({ arr: arr, arr2: arr2, arr3: arr3 });
-    } else {
-      await booking.save();
-      res.status(201).json(booking);
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-app.post("/pay", auth, async (req, res) => {
-  try {
-    const { booking_id, image } = req.body;
-
-    if (!booking_id) {
-      return res.status(400).send("Booking ID is required");
-    }
-
-    const booking = await Booking.findById(booking_id);
-    if (!booking) {
-      return res.status(404).send("Booking not found");
-    }
-
-    if (booking.image === "paid") {
-      return res.status(400).send("Booking already paid");
-    }
-
-    booking.image = image;
-    await booking.save();
-
-    res.status(200).json(booking);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-
-
-
-// admin
-
-app.post("/paid", async (req, res) => {
-  try {
-    const { booking_id } = req.body;
-
-    if (!booking_id) {
-      return res.status(400).send("Booking ID is required");
-    }
-
-    const booking = await Booking.findById(booking_id);
-    if (!booking) {
-      return res.status(404).send("Booking not found");
-    }
-
-    booking.status = "paid";
-    await booking.save();
-
-    res.status(200).json(booking);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
-  }
-});
 
 module.exports = app;
