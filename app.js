@@ -46,11 +46,64 @@ const upload = multer({ storage: storage });
 app.get("/v1/room", async (req, res) => {
     try {
         const room = await Room.find();
-        res.status(200).json({data: room});
+        res.status(201).json({body: room});
     } catch (err) {
         res.json({ message: err });
     }
 });
+
+app.get("/v1/room/:type", async (req, res) => {
+    console.log(req.params.type);
+    try {
+        const room = await Room.find({type: req.params.type});
+        res.status(201).json({body: room});
+    } catch (err) {
+        res.json({ message: err });
+    }
+});
+
+app.post("/v1/book_room", async (req, res) => {
+    try {
+        const { room_name, 
+            email,
+             check_in_date,
+              check_out_date,
+               total_price,
+                total_cats,
+                status,
+                 pay_way,
+                 total_cameras,
+                  image } = req.body;
+
+      
+        // if(!(room_name && email && check_in_date && check_out_date && total_price && total_cats && status && pay_way && total_cameras && image)){
+        //     return res.status(400).send("All input is required");
+        // }
+        
+
+
+        const booking = await Booking.create({
+            room_name,
+            email,
+            check_in_date,
+            check_out_date,
+            total_price,
+            total_cats,
+            status,
+            pay_way,
+            total_cameras,
+            image
+        });
+
+        res.status(201).json({body : booking} );
+
+    } catch (err) {
+        res.json({ message: err });
+    }
+});
+
+
+
 
 app.get("/v2/superbase", async (req, res) => {
     try {
