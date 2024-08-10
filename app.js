@@ -49,7 +49,23 @@ const upload = multer({ storage: storage });
 app.get("/v1/room", async (req, res) => {
     try {
         const room = await Room.find();
-        res.status(201).json({body: room});
+        const booking = await Booking.find();
+
+        let data = {
+            "room": room,
+            "booking": booking
+        }
+
+        res.status(201).json({body: data});
+    } catch (err) {
+        res.json({ message: err });
+    }
+});
+
+app.get("/v1/booking", async (req, res) => {
+    try {
+        const booking = await Booking.find();
+        res.status(201).json({body: booking});
     } catch (err) {
         res.json({ message: err });
     }
