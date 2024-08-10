@@ -14,11 +14,14 @@ const Book_Camera = require("./model/booking_cam");
 const multer = require("multer");
 const bodyParser = require("body-parser");
 const Room = require("./model/room");
+// const { type } = require("express/lib/response");
 
 const { createClient } = require('@supabase/supabase-js');
-const { type } = require("express/lib/response");
+
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_KEY
+
+
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // const s3 = new AWS.S3({
@@ -53,7 +56,6 @@ app.get("/v1/room", async (req, res) => {
 });
 
 app.get("/v1/room/:type", async (req, res) => {
-    console.log(req.params.type);
     try {
         const room = await Room.find({type: req.params.type});
         res.status(201).json({body: room});
@@ -189,7 +191,7 @@ app.post("/v1/create_room", async (req, res) => {
             return res.status(400).send("Error searching for folders");
         }
 
-        const folderExists = folders.some(folder => folder.name === room_name);
+        const folderExists = folders.some(folder => folder.name === type);
 
         if (folderExists) {
             return res.status(400).send("A folder with this room name already exists");
@@ -222,7 +224,6 @@ app.post("/v1/create_room", async (req, res) => {
         if (imageBase64.length !== image.length) {
             return res.status(400).send("Error uploading image");
         }
-
 
         const room = await Room.create({
             room_name,
