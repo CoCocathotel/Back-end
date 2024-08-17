@@ -10,6 +10,10 @@ const bookingSchema = new mongoose.Schema({
     status: { type: String, default: 'pending' },
     pay_way: { type: String, required: true },
     total_cameras: { type: Number, default: 0},
+    optional_services: [{
+            service: String,
+            form: String,
+    }],
     image: { type: String }
 }); 
 
