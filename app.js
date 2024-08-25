@@ -68,29 +68,43 @@ app.post("/v1/book_room", async (req, res) => {
   try {
     const {
       room_name,
+      type,
       email,
+      user_name,
+      phone,
+      special_request,
       optional_services,
       check_in_date,
       check_out_date,
       total_price,
       total_cats,
+      total_rooms,
       status,
       pay_way,
       total_cameras,
       image,
     } = req.body;
 
+    // fan-room
+    // ac-connecting-room
+    // ac-standard-room
+
     // if(!(room_name && email && check_in_date && check_out_date && total_price && total_cats && status && pay_way && total_cameras && image)){
     //     return res.status(400).send("All input is required");
     // }
-
+    
     const booking = await Booking.create({
       room_name,
+      type,
       email,
+      user_name,
+      phone,
+      special_request,
       check_in_date,
       check_out_date,
       total_price,
       total_cats,
+      total_rooms,
       status,
       pay_way,
       total_cameras,
