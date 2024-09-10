@@ -114,7 +114,7 @@ app.post("/v1/update-status", async (req, res) => {
   try {
     const { id, status } = req.body;
 
-    console.log(id);
+    console.log(id, " ", status);
 
     if (!id && !status) {
       return res.status(400).send("All input is required");
