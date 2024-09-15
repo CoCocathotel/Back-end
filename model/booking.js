@@ -6,6 +6,10 @@ const bookingSchema = new mongoose.Schema({
     email: { type: String },
     user_name: { type: String },
     phone: { type: String },
+
+    user_name_2: { type: String },
+    phone_2: { type: String },
+    
     special_request: { type: String },    
     check_in_date: { type: Date, default: Date.now },
     check_out_date: { type: Date },

@@ -94,21 +94,29 @@ app.post("/v1/cart", async (req, res) => {
     // const booking = await Booking.find({ email: email });
     // console.log("user");
     // res.status(201).json({ body: booking });
-    if(pos === "admin"){
+    if (pos === "admin") {
       const booking = await Booking.find();
       // console.log("admin");
       res.status(201).json({ body: booking });
-    }else{
+    } else {
       const booking = await Booking.find({ email: email });
       // console.log("user");
       res.status(201).json({ body: booking });
     }
-
   } catch (err) {
     res.json({ message: err });
   }
 });
 
+app.get("/v1/booking/:id", async (req, res) => {
+  try {
+    const booking = await Booking.find({ _id: req.params.id });
+    console.log(booking);
+    res.status(201).json({ body: booking });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
 
 app.post("/v1/update-status", async (req, res) => {
   try {
@@ -120,7 +128,7 @@ app.post("/v1/update-status", async (req, res) => {
       return res.status(400).send("All input is required");
     }
 
-    const booking = await Booking.findOne({_id: id});
+    const booking = await Booking.findOne({ _id: id });
     booking.status = status;
     await booking.save();
     res.status(201).json({ body: booking });
@@ -184,6 +192,38 @@ app.get("/v1/room/:type", async (req, res) => {
   }
 });
 
+app.post("/v1/edit_book_room", async (req, res) => {
+  const { _id, user_name_2, phone_2, special_request, pay_way, image } =
+    req.body;
+
+  // Find the booking by its ID
+  const booking = await Booking.findOne({ _id: _id });
+
+  if (!booking) {
+    return res.status(404).json({ message: "Booking not found" });
+  }
+
+  // Prepare an object with only non-null and non-empty values
+  const updatedFields = {};
+
+  if (user_name_2 !== null && user_name_2 !== "")
+    updatedFields.user_name_2 = user_name_2;
+  if (phone_2 !== null && phone_2 !== "") updatedFields.phone_2 = phone_2;
+  if (special_request !== null && special_request !== "")
+    updatedFields.special_request = special_request;
+  if (pay_way !== null && pay_way !== "") updatedFields.pay_way = pay_way;
+  if (image !== null && image !== "") updatedFields.image = image;
+
+  try {
+    // Update the booking document in the database
+    await Booking.updateOne({ _id: _id }, { $set: updatedFields });
+
+    return res.status(200).json({ message: "Booking updated successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating booking", error });
+  }
+});
+
 app.post("/v1/book_room", async (req, res) => {
   try {
     const {
@@ -192,6 +232,8 @@ app.post("/v1/book_room", async (req, res) => {
       email,
       user_name,
       phone,
+      user_name_2,
+      phone_2,
       special_request,
       optional_services,
       check_in_date,
@@ -219,6 +261,8 @@ app.post("/v1/book_room", async (req, res) => {
       email,
       user_name,
       phone,
+      user_name_2,
+      phone_2,
       special_request,
       check_in_date,
       check_out_date,
@@ -238,63 +282,84 @@ app.post("/v1/book_room", async (req, res) => {
   }
 });
 
-app.get("/v2/superbase", async (req, res) => {
+app.post("/v1/delete_book_room", async (req, res) => {
+  const { _id } = req.body;
+
   try {
-    const { data, error } = await supabase.storage.from("rooms").list("", {
-      limit: 100,
-      offset: 0,
-      sortBy: { column: "name", order: "asc" },
-    });
+    // Check if the booking exists
+    const booking = await Booking.findOne({ _id: _id });
 
-    if (error) {
-      return res.status(400).send("Error searching for folders");
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
     }
-    const room = data.map((room) => room.name);
 
-    // get img in room superbase
+    // Delete the booking
+    await Booking.deleteOne({ _id: _id });
 
-    let img_data = [];
-    for (let i = 0; i < room.length; i++) {
-      const { data, error } = await supabase.storage
-        .from("rooms")
-        .list(room[i], {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: "name", order: "asc" },
-        });
-
-      if (error) {
-        return res.status(400).send("Error searching for folders");
-      }
-      const img = data.map((img) => img.name);
-      let imgjsn = { type: room[i], img: img };
-
-      img_data.push(imgjsn);
-    }
-    res.status(200).json(img_data);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(200).json({ message: "Booking deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting booking", error });
   }
 });
 
-app.post("/v1/superbase", async (req, res) => {
-  try {
-    const { type } = req.body;
-    const { data, error } = await supabase.storage.from("rooms").list(type, {
-      limit: 100,
-      offset: 0,
-      sortBy: { column: "name", order: "asc" },
-    });
 
-    if (error) {
-      return res.status(400).send("Error searching for folders");
-    }
-    const room = data.map((room) => "/" + type + "/" + room.name);
-    res.status(200).json(room);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// app.get("/v2/superbase", async (req, res) => {
+//   try {
+//     const { data, error } = await supabase.storage.from("rooms").list("", {
+//       limit: 100,
+//       offset: 0,
+//       sortBy: { column: "name", order: "asc" },
+//     });
+
+//     if (error) {
+//       return res.status(400).send("Error searching for folders");
+//     }
+//     const room = data.map((room) => room.name);
+
+//     // get img in room superbase
+
+//     let img_data = [];
+//     for (let i = 0; i < room.length; i++) {
+//       const { data, error } = await supabase.storage
+//         .from("rooms")
+//         .list(room[i], {
+//           limit: 100,
+//           offset: 0,
+//           sortBy: { column: "name", order: "asc" },
+//         });
+
+//       if (error) {
+//         return res.status(400).send("Error searching for folders");
+//       }
+//       const img = data.map((img) => img.name);
+//       let imgjsn = { type: room[i], img: img };
+
+//       img_data.push(imgjsn);
+//     }
+//     res.status(200).json(img_data);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
+
+// app.post("/v1/superbase", async (req, res) => {
+//   try {
+//     const { type } = req.body;
+//     const { data, error } = await supabase.storage.from("rooms").list(type, {
+//       limit: 100,
+//       offset: 0,
+//       sortBy: { column: "name", order: "asc" },
+//     });
+
+//     if (error) {
+//       return res.status(400).send("Error searching for folders");
+//     }
+//     const room = data.map((room) => "/" + type + "/" + room.name);
+//     res.status(200).json(room);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
 
 app.post("/v1/create_room", async (req, res) => {
   try {
