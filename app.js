@@ -57,7 +57,7 @@ app.post("/v1/register", async (req, res) => {
     }
 
     encryptedPassword = await bcrypt.hash(password, 10);
-    console.log(encryptedPassword);
+    // console.log(encryptedPassword);
 
     const user = await User.create({
       first_name,
@@ -111,7 +111,7 @@ app.post("/v1/cart", async (req, res) => {
 app.get("/v1/booking/:id", async (req, res) => {
   try {
     const booking = await Booking.find({ _id: req.params.id });
-    console.log(booking);
+    // console.log(booking);
     res.status(201).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
@@ -122,7 +122,7 @@ app.post("/v1/update-status", async (req, res) => {
   try {
     const { id, status } = req.body;
 
-    console.log(id, " ", status);
+    // console.log(id, " ", status);
 
     if (!id && !status) {
       return res.status(400).send("All input is required");
@@ -302,7 +302,6 @@ app.post("/v1/delete_book_room", async (req, res) => {
   }
 });
 
-
 // app.get("/v2/superbase", async (req, res) => {
 //   try {
 //     const { data, error } = await supabase.storage.from("rooms").list("", {
@@ -408,18 +407,19 @@ app.post("/v1/create_room", async (req, res) => {
 
     let imageBase64 = [];
 
-    for (let i = 0; i < image.length; i++) {
+    for (let i = 0; i < 1; i++) {
       const base64Data = image[i].replace(/^data:image\/\w+;base64,/, "");
       const buf = Buffer.from(base64Data, "base64");
+      console.log("img = ", base64Data);
       const imageName = `${i}.png`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("rooms")
         .upload(`${type}/${imageName}`, buf, {
-          cacheControl: "3600",
+          // cacheControl: "3600",
           upsert: false,
           contentType: "image/png",
-          contentEncoding: "base64",
+          // contentEncoding: "base64",
         });
 
       if (uploadError) {
@@ -427,14 +427,13 @@ app.post("/v1/create_room", async (req, res) => {
       } else {
         imageBase64.push(imageName);
       }
-      console.log(uploadData);
     }
 
-    if (imageBase64.length !== image.length) {
-      return res.status(400).send("Error uploading image");
-    }
+    // if (imageBase64.length !== image.length) {
+    //   return res.status(400).send("Error uploading image");
+    // }
 
-    const room = await Room.create({
+    let room = await Room.create({
       room_name,
       type,
       price,
@@ -446,10 +445,155 @@ app.post("/v1/create_room", async (req, res) => {
       number_of_rooms,
     });
 
+    console.log(room);
+
     res.status(201).json("Room created successfully");
   } catch (err) {
     res.json({ message: err });
   }
 });
+
+app.post("/v1/edit_room", async (req, res) => {
+  try {
+    const {
+      room_id,
+      room_name,
+      type,
+      price,
+      image,
+      description,
+      cameras,
+      optional_services,
+      number_of_cats,
+      number_of_rooms,
+    } = req.body;
+
+    // ตรวจสอบว่า room_id ถูกส่งมาหรือไม่
+    if (!room_id) {
+      return res.status(400).json({ message: "Room ID is required." });
+    }
+
+    // หา room ในฐานข้อมูล
+    const existingRoom = await Room.findById(room_id);
+
+    if (!existingRoom) {
+      return res.status(404).json({ message: "Room not found." });
+    }
+
+    // อัปเดตรูปภาพใน Superbase ถ้ามีการเปลี่ยนแปลง
+    let imageBase64 = existingRoom.image; // รูปภาพเดิม
+    if (image && image.length > 0) {
+      // ลบรูปภาพเก่าจาก Superbase
+      const { error: deleteError } = await supabase.storage
+        .from("rooms")
+        .remove(existingRoom.image.map((img) => `${existingRoom.type}/${img}`));
+
+      if (deleteError) {
+        return res
+          .status(500)
+          .json({
+            message: "Error deleting old images from storage",
+            error: deleteError.message,
+          });
+      }
+
+      // อัปโหลดรูปภาพใหม่ไปยัง Superbase
+      imageBase64 = [];
+      for (let i = 0; i < 1; i++) {
+        const base64Data = image[i].replace(/^data:image\/\w+;base64,/, "");
+        const buf = Buffer.from(base64Data, "base64");
+        const imageName = `${i}.png`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("rooms")
+          .upload(`${type}/${imageName}`, buf, {
+            upsert: false,
+            contentType: "image/png",
+          });
+
+        if (uploadError) {
+          return res
+            .status(500)
+            .json({
+              message: "Error uploading new images",
+              error: uploadError.message,
+            });
+        }
+
+        imageBase64.push(imageName);
+      }
+    }
+
+    // อัปเดตข้อมูลห้องใน MongoDB
+    const updatedRoom = await Room.findByIdAndUpdate(
+      room_id,
+      {
+        room_name,
+        type,
+        price,
+        image: imageBase64,
+        description,
+        cameras,
+        optional_services,
+        number_of_cats,
+        number_of_rooms,
+      },
+      { new: true }
+    );
+
+    res.json({ message: "Room updated successfully", room: updatedRoom });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/v1/delete_room", async (req, res) => {
+  try {
+      const { room_id } = req.body; // Get room_id from client request
+
+      // Check if room_id is provided
+      if (!room_id) {
+          return res.status(400).json({ message: "Room ID is required." });
+      }
+
+      // Find the room in the database
+      const room = await Room.findById(room_id);
+      if (!room) {
+          return res.status(404).json({ message: "Room not found." });
+      }
+
+      // Log the folder path to be deleted
+      const folderPath = ` ${room.type}`;
+      console.log(`Deleting folder: ${folderPath}`);
+
+      // Delete the folder related to the room type from Supabase storage
+      const { error: deleteFolderError } = await supabase.storage
+          .from("rooms")
+          .remove([folderPath]);
+
+      if (deleteFolderError) {
+          console.error(`Error deleting folder: ${deleteFolderError.message}`);
+          return res
+              .status(500)
+              .json({
+                  message: "Error deleting folder from storage",
+                  error: deleteFolderError.message,
+              });
+      }
+
+      // Delete the room from MongoDB
+      await Room.findByIdAndDelete(room_id);
+
+      // Send success response when both folder and room are deleted
+      res.json({
+          message: "Room and associated folder deleted successfully",
+          room,
+      });
+  } catch (err) {
+      console.error(`Error in deleting room: ${err.message}`);
+      res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = app;
