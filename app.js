@@ -563,7 +563,7 @@ app.delete("/v1/delete_room", async (req, res) => {
       }
 
       // Log the folder path to be deleted
-      const folderPath = ` ${room.type}`;
+      const folderPath = `${room.type}`;
       console.log(`Deleting folder: ${folderPath}`);
 
       // Delete the folder related to the room type from Supabase storage
