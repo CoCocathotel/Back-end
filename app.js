@@ -36,15 +36,17 @@ const corsOptions = {
   origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
 };
-
-// Use CORS middleware
-app.use(cors(corsOptions));
 
 // Handle preflight requests
 app.options('*', (req, res) => {
   res.sendStatus(200);  // Send a 200 OK status for preflight requests
 });
+
+// Use CORS middleware
+app.use(cors(corsOptions));
+
 
 
 app.use(bodyParser.json({ limit: "5mb" }));
