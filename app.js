@@ -32,36 +32,18 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-// const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
 
-// const corsOptions = {
-//   origin: allowedOrigins, 
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-// };
+const corsOptions = {
+  origin: allowedOrigins, // อนุญาตเฉพาะ origin ที่กำหนดไว้
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
+};
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
-
-// cors use all origin 
-// const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
-
-// const corsOptions = {
-//   origin: allowedOrigins, // อนุญาตเฉพาะ origin ที่กำหนดไว้
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
-// };
-
-// app.use(cors(corsOptions));
-
-
-// app.options('*', cors(corsOptions)); // รองรับ preflight สำหรับทุก route
- 
-
-app.use(cors({ origin: 'https://cococatfrontend.vercel.app' }));
-
-
+app.options('*', cors(corsOptions)); // รองรับ preflight สำหรับทุก route
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
