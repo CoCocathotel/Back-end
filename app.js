@@ -37,9 +37,6 @@ const app = express();
 app.use(cors());
 
 // Handle preflight requests
-app.options('/*', (_, res) => {
-  res.sendStatus(200);
-});
 
 const corsOptions = {
   origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
@@ -60,6 +57,9 @@ const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage });
 
 
+app.options('/*', (_, res) => {
+  res.sendStatus(200);
+});
 
 
 app.get("/v1/booking/:id", async (req, res) => {
