@@ -146,17 +146,33 @@ app.post("/v1/register", async (req, res) => {
 });
 
 app.post("/v1/cart", async (req, res) => {
-  // find all booking of  user with email
   try {
     const { email, pos } = req.body;
 
     if (!email && !pos) {
       return res.status(400).send("All input is required");
     }
-    // console.log(pos);
-    // const booking = await Booking.find({ email: email });
-    // console.log("user");
-    // res.status(201).json({ body: booking });
+    if (pos === "admin") {
+      const booking = await Booking.find();
+      // console.log("admin");
+      res.status(201).json({ body: booking });
+    } else {
+      const booking = await Booking.find({ email: email });
+      // console.log("user");
+      res.status(201).json({ body: booking });
+    }
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+app.post("/cart", async (req, res) => {
+  try {
+    const { email, pos } = req.body;
+
+    if (!email && !pos) {
+      return res.status(400).send("All input is required");
+    }
     if (pos === "admin") {
       const booking = await Booking.find();
       // console.log("admin");
