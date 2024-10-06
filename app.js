@@ -36,7 +36,7 @@ const corsOptions = {
   origin: ['https://cococatfrontend.vercel.app', 'http://localhost:3000'], // กำหนด origin ที่อนุญาต
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // กำหนด method ที่รองรับ
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, // อนุญาตการใช้งาน cookies หรือ credentials
+  // credentials: true, // อนุญาตการใช้งาน cookies หรือ credentials
 };
 
 app.use(cors(corsOptions));
