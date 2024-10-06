@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 
 // Import CORS middleware
-const { corsMiddleware, handlePreflight } = require('./middlewares/corsMiddleware');
+const { corsMiddleware, handlePreflight } = require('./middleware/corsMiddleware');
 
 // Models and other imports
 const User = require("./model/user");
