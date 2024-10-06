@@ -14,6 +14,7 @@ const Book_Camera = require("./model/booking_cam");
 const multer = require("multer");
 const bodyParser = require("body-parser");
 const Room = require("./model/room");
+// const { type } = require("express/lib/response");
 
 const { createClient } = require("@supabase/supabase-js");
 
@@ -22,15 +23,29 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// const s3 = new AWS.S3({
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//     region: process.env.AWS_REGION,
+//     endpoint_url : process.env.AWS_ENDPOINT_URL
+// });
+
 const app = express();
 
-// เปิดใช้ CORS โดยอนุญาตทุก origin และ method ทั้งหมด
-app.use(cors({
-  origin: '*', // อนุญาตทุก origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตทุก methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // อนุญาต headers ที่จำเป็น
-  credentials: true // อนุญาตให้ส่ง cookie หรือข้อมูล authentication
-}));
+// const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+
+// const corsOptions = {
+//   origin: allowedOrigins, 
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// };
+
+// app.use(cors(corsOptions));
+
+
+// cors use all origin 
+app.use(cors());
+
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
