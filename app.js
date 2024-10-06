@@ -33,7 +33,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 
 const corsOptions = {
-  origin: 'https://cococatfrontend.vercel.app', // อนุญาตต้นทางนี้เท่านั้น
+  origin: '*', // อนุญาตต้นทางนี้เท่านั้น
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
