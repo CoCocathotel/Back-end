@@ -44,7 +44,27 @@ const app = express();
 
 
 // cors use all origin 
-app.use(cors());
+
+function productionCheck() {
+  const isDevelopment =
+    window.location.origin.includes("localhost") ||
+    window.location.origin.includes("127.0.0.1");
+
+  return isDevelopment
+    ? "http://localhost:3000"
+    : "https://cococatfrontend.vercel.app";
+}
+
+const corsOptions = {
+  origin: [productionCheck(), `${productionCheck()}/`],
+  optionsSuccessStatus: 200,
+  credentials: true,
+  maxAge: 86400,
+  methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+  allowedHeaders: "Origin,X-CSRF-Token,Authorization,X-Requested-With,Accept,Accept-Version,Content-Length,Content-MD5,Content-Type,Date,X-Api-Version,Connection"
+};
+
+app.use(cors(corsOptions));
 
 
 app.use(bodyParser.json({ limit: "5mb" }));
