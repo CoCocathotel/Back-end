@@ -77,7 +77,7 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.get("/v1/room", async (req, res) => {
+app.get("/v1/room_all", async (req, res) => {
   try {
     const room = await Room.find();
     const booking = await Booking.find();
