@@ -1,48 +1,31 @@
+
 require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
-const cors = require("cors");
-const AWS = require("aws-sdk");
-
-const User = require("./model/user");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const auth = require("./middleware/auth");
-const Booking = require("./model/booking");
-const Camera = require("./model/camera");
-const Book_Camera = require("./model/booking_cam");
-const multer = require("multer");
 const bodyParser = require("body-parser");
-const Room = require("./model/room");
-// const { type } = require("express/lib/response");
+const multer = require("multer");
 
+// Import CORS middleware
+const { corsMiddleware, handlePreflight } = require('./middlewares/corsMiddleware');
+
+// Models and other imports
+const User = require("./model/user");
+const Booking = require("./model/booking");
+const Room = require("./model/room");
+const auth = require("./middleware/auth");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// const s3 = new AWS.S3({
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//     region: process.env.AWS_REGION,
-//     endpoint_url : process.env.AWS_ENDPOINT_URL
-// });
 
 const app = express();
 
-const corsOptions = {
-  origin: '*', // อนุญาตต้นทางนี้เท่านั้น
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+// Use CORS middleware
+app.use(corsMiddleware);
 
-app.use(cors(corsOptions));
-
-// รองรับ preflight requests
-app.options('*', cors())
-
+// Handle preflight requests
+app.use(handlePreflight);
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
