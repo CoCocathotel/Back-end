@@ -33,16 +33,17 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 
 const corsOptions = {
-  origin: ['https://cococatfrontend.vercel.app', 'http://localhost:3000'], // ระบุ origin ที่อนุญาต
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
+  origin: ['https://cococatfrontend.vercel.app', 'http://localhost:3000'], // กำหนด origin ที่อนุญาต
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // กำหนด method ที่รองรับ
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
+  credentials: true, // อนุญาตการใช้งาน cookies หรือ credentials
 };
 
 app.use(cors(corsOptions));
 
 // รองรับ preflight request ทุก route
 app.options('*', cors(corsOptions));
+
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
