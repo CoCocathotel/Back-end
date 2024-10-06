@@ -24,18 +24,18 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-const corsOptions = {
-  origin: 'https://cococatfrontend.vercel.app', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true,
-};
+// const corsOptions = {
+//   origin: 'https://cococatfrontend.vercel.app', // Replace with your frontend URL
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//   credentials: true,
+// };
 
 // Enable CORS with the specified options
-app.use(cors(corsOptions));
+app.use(cors());
 
-// Handle preflight requests for all routes
-app.options('*', cors(corsOptions));
+// // Handle preflight requests for all routes
+// app.options('*', cors(corsOptions));
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
