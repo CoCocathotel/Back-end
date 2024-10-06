@@ -32,7 +32,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-const allowedOrigins = ['https://cococatfrontend.vercel.app/', 'http://localhost:3000'];
+const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
 
 const corsOptions = {
   origin: allowedOrigins, 
@@ -40,7 +40,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); 
 
 
 app.use(bodyParser.json({ limit: "5mb" }));
