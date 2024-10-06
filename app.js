@@ -33,6 +33,21 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 
 
+// Use CORS middleware
+app.use(cors());
+
+// Handle preflight requests
+app.options('/*', (_, res) => {
+  res.sendStatus(200);
+});
+
+const corsOptions = {
+  origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
+};
+
 
 
 
@@ -45,21 +60,6 @@ const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage });
 
 
-const corsOptions = {
-  origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
-};
-
-// Handle preflight requests
-app.options('/*', (_, res) => {
-  res.sendStatus(200);
-});
-
-
-// Use CORS middleware
-app.use(cors());
 
 
 app.get("/v1/booking/:id", async (req, res) => {
