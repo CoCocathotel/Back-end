@@ -49,7 +49,7 @@ const corsOptions = {
   origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  // credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
+  credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
 };
 
 // Handle preflight requests
