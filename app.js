@@ -39,6 +39,20 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.json());
 
 
+app.get("/", (req, res) => {
+  res.json({ message: "API Working"});
+});
+
+app.post("/v1/getAllMember", async (req, res) => {
+  try {
+    const user = await User.find();
+    res.status(200).json({ body: user });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+
 // app.post("/v1/register", async (req, res) => {
 //   try {
 //     const { first_name, last_name, email, password } = req.body;
