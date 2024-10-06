@@ -61,55 +61,6 @@ app.use(express.json());
 // });
 
 
-app.get("/v1/booking/:id", async (req, res) => {
-  try {
-    const booking = await Booking.find({ _id: req.params.id });
-    // console.log(booking);
-    res.status(200).json({ body: booking });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/", async (req, res) => {
-  try {
-    const room = await Room.find();
-    const booking = await Booking.find();
-    res.status(200).json({
-      body: {
-        room: room,
-        booking: booking,
-      },
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/v1/room", async (req, res) => {
-  try {
-    const room = await Room.find();
-    const booking = await Booking.find();
-    res.status(200).json({
-      body: {
-        room: room,
-        booking: booking,
-      },
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/v1/room/:type", async (req, res) => {
-  try {
-    const room = await Room.find({ type: req.params.type });
-    res.status(200).json({ body: room });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
 app.post("/v1/register", async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
@@ -144,28 +95,43 @@ app.post("/v1/register", async (req, res) => {
 
     user.token = token;
 
-    res.status(200).json(user);
+    res.status(201).json(user);
   } catch (err) {
     console.log(err);
   }
 });
 
 app.post("/v1/cart", async (req, res) => {
+  // find all booking of  user with email
   try {
     const { email, pos } = req.body;
 
     if (!email && !pos) {
       return res.status(400).send("All input is required");
     }
+    // console.log(pos);
+    // const booking = await Booking.find({ email: email });
+    // console.log("user");
+    // res.status(201).json({ body: booking });
     if (pos === "admin") {
       const booking = await Booking.find();
       // console.log("admin");
-      res.status(200).json({ body: booking });
+      res.status(201).json({ body: booking });
     } else {
       const booking = await Booking.find({ email: email });
       // console.log("user");
-      res.status(200).json({ body: booking });
+      res.status(201).json({ body: booking });
     }
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+app.get("/v1/booking/:id", async (req, res) => {
+  try {
+    const booking = await Booking.find({ _id: req.params.id });
+    // console.log(booking);
+    res.status(201).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
   }
@@ -184,40 +150,9 @@ app.post("/v1/update-status", async (req, res) => {
     const booking = await Booking.findOne({ _id: id });
     booking.status = status;
     await booking.save();
-    res.status(200).json({ body: booking });
+    res.status(201).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!(email && password)) {
-      return res.status(400).send("All input is required");
-    }
-
-    const user = await User.findOne({ email });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const token = jwt.sign(
-        { user_id: user._id, email },
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "1h",
-        }
-      );
-
-      user.token = token;
-      await user.save();
-
-      res.status(200).json(user);
-    } else {
-      res.status(400).send("Invalid Credentials");
-    }
-  } catch (err) {
-    console.log(err);
   }
 });
 
@@ -252,6 +187,29 @@ app.post("/v1/login", async (req, res) => {
   }
 });
 
+app.get("/v1/room", async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(201).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+app.get("/v1/room/:type", async (req, res) => {
+  try {
+    const room = await Room.find({ type: req.params.type });
+    res.status(201).json({ body: room });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
 
 app.post("/v1/edit_book_room", async (req, res) => {
   const { _id, user_name_2, phone_2, special_request, pay_way, image } =
@@ -337,7 +295,7 @@ app.post("/v1/book_room", async (req, res) => {
       image,
     });
 
-    res.status(200).json({ body: booking });
+    res.status(201).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
   }
@@ -450,7 +408,7 @@ app.post("/v1/create_room", async (req, res) => {
 
     console.log(room);
 
-    res.status(200).json("Room created successfully");
+    res.status(201).json("Room created successfully");
   } catch (err) {
     res.json({ message: err });
   }
@@ -550,53 +508,53 @@ app.post("/v1/edit_room", async (req, res) => {
   }
 });
 
-// app.delete("/v1/delete_room", async (req, res) => {
-//   try {
-//       const { room_id } = req.body; // Get room_id from client request
+app.delete("/v1/delete_room", async (req, res) => {
+  try {
+      const { room_id } = req.body; // Get room_id from client request
 
-//       // Check if room_id is provided
-//       if (!room_id) {
-//           return res.status(400).json({ message: "Room ID is required." });
-//       }
+      // Check if room_id is provided
+      if (!room_id) {
+          return res.status(400).json({ message: "Room ID is required." });
+      }
 
-//       // Find the room in the database
-//       const room = await Room.findById(room_id);
-//       if (!room) {
-//           return res.status(404).json({ message: "Room not found." });
-//       }
+      // Find the room in the database
+      const room = await Room.findById(room_id);
+      if (!room) {
+          return res.status(404).json({ message: "Room not found." });
+      }
 
-//       // Log the folder path to be deleted
-//       const folderPath = `${room.type}`;
-//       console.log(`Deleting folder: ${folderPath}`);
+      // Log the folder path to be deleted
+      const folderPath = `${room.type}`;
+      console.log(`Deleting folder: ${folderPath}`);
 
-//       // Delete the folder related to the room type from Supabase storage
-//       const { error: deleteFolderError } = await supabase.storage
-//           .from("rooms")
-//           .remove([folderPath]);
+      // Delete the folder related to the room type from Supabase storage
+      const { error: deleteFolderError } = await supabase.storage
+          .from("rooms")
+          .remove([folderPath]);
 
-//       if (deleteFolderError) {
-//           console.error(`Error deleting folder: ${deleteFolderError.message}`);
-//           return res
-//               .status(500)
-//               .json({
-//                   message: "Error deleting folder from storage",
-//                   error: deleteFolderError.message,
-//               });
-//       }
+      if (deleteFolderError) {
+          console.error(`Error deleting folder: ${deleteFolderError.message}`);
+          return res
+              .status(500)
+              .json({
+                  message: "Error deleting folder from storage",
+                  error: deleteFolderError.message,
+              });
+      }
 
-//       // Delete the room from MongoDB
-//       await Room.findByIdAndDelete(room_id);
+      // Delete the room from MongoDB
+      await Room.findByIdAndDelete(room_id);
 
-//       // Send success response when both folder and room are deleted
-//       res.json({
-//           message: "Room and associated folder deleted successfully",
-//           room,
-//       });
-//   } catch (err) {
-//       console.error(`Error in deleting room: ${err.message}`);
-//       res.status(500).json({ message: err.message });
-//   }
-// });
+      // Send success response when both folder and room are deleted
+      res.json({
+          message: "Room and associated folder deleted successfully",
+          room,
+      });
+  } catch (err) {
+      console.error(`Error in deleting room: ${err.message}`);
+      res.status(500).json({ message: err.message });
+  }
+});
 
 
 module.exports = app;
