@@ -44,21 +44,22 @@ const app = express();
 
 
 // cors use all origin 
-const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+// const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
 
-const corsOptions = {
-  origin: allowedOrigins, // อนุญาตเฉพาะ origin ที่กำหนดไว้
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
-};
+// const corsOptions = {
+//   origin: allowedOrigins, // อนุญาตเฉพาะ origin ที่กำหนดไว้
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 
-app.options('*', cors(corsOptions)); // รองรับ preflight สำหรับทุก route
+// app.options('*', cors(corsOptions)); // รองรับ preflight สำหรับทุก route
+ 
 
-app.use(cors());
+app.use(cors({ origin: 'https://cococatfrontend.vercel.app' }));
 
 
 app.use(bodyParser.json({ limit: "5mb" }));
@@ -81,21 +82,6 @@ app.get("/v1/booking/:id", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
-  try {
-    const room = await Room.find();
-    const booking = await Booking.find();
-    res.status(201).json({
-      body: {
-        room: room,
-        booking: booking,
-      },
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/v1/room_all", async (req, res) => {
   try {
     const room = await Room.find();
     const booking = await Booking.find();
@@ -160,27 +146,6 @@ app.post("/v1/register", async (req, res) => {
 });
 
 app.post("/v1/cart", async (req, res) => {
-  try {
-    const { email, pos } = req.body;
-
-    if (!email && !pos) {
-      return res.status(400).send("All input is required");
-    }
-    if (pos === "admin") {
-      const booking = await Booking.find();
-      // console.log("admin");
-      res.status(201).json({ body: booking });
-    } else {
-      const booking = await Booking.find({ email: email });
-      // console.log("user");
-      res.status(201).json({ body: booking });
-    }
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.post("/cart", async (req, res) => {
   try {
     const { email, pos } = req.body;
 
