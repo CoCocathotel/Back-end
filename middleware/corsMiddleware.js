@@ -12,6 +12,7 @@ const corsMiddleware = cors(corsOptions);
 const handlePreflight = (req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    console.log('Received an OPTIONS request');
     return res.sendStatus(200); // Always respond with status 200 for OPTIONS
   }
   next();
