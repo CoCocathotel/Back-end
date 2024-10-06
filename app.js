@@ -38,15 +38,6 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
 app.use(express.json());
 
-// const storage = multer.memoryStorage();
-// const upload = multer({ storage: storage });
-
-
-// app.options('/*', (_, res) => {
-//   res.sendStatus(200);
-// });
-
-
 app.post("/v1/register", async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
@@ -145,7 +136,7 @@ app.post("/v1/update-status", async (req, res) => {
 app.post("/v1/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     if (!(email && password)) {
       return res.status(400).send("All input is required");
     }

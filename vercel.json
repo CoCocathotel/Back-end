@@ -9,19 +9,9 @@
   "routes": [
     {
       "src": "/(.*)",
-      "methods": ["OPTIONS"],
-      "dest": "./index.js",
-      "status": 204,
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
-    },
-    {
-      "src": "/(.*)",
       "methods": ["GET", "POST", "PUT", "DELETE"],
       "dest": "./index.js",
+      "status": 204,
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
