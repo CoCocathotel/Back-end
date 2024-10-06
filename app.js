@@ -32,7 +32,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-const allowedOrigins = ['cococatfrontend.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://cococatfrontend.vercel.app/', 'http://localhost:3000'];
 
 const corsOptions = {
   origin: allowedOrigins, 
