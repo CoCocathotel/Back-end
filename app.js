@@ -61,7 +61,7 @@ app.get("/v1/booking/:id", async (req, res) => {
   try {
     const booking = await Booking.find({ _id: req.params.id });
     // console.log(booking);
-    res.status(201).json({ body: booking });
+    res.status(200).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
   }
@@ -71,7 +71,7 @@ app.get("/", async (req, res) => {
   try {
     const room = await Room.find();
     const booking = await Booking.find();
-    res.status(201).json({
+    res.status(200).json({
       body: {
         room: room,
         booking: booking,
@@ -85,7 +85,7 @@ app.get("/", async (req, res) => {
 app.get("/v1/room/:type", async (req, res) => {
   try {
     const room = await Room.find({ type: req.params.type });
-    res.status(201).json({ body: room });
+    res.status(200).json({ body: room });
   } catch (err) {
     res.json({ message: err });
   }
@@ -125,7 +125,7 @@ app.post("/v1/register", async (req, res) => {
 
     user.token = token;
 
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (err) {
     console.log(err);
   }
@@ -141,11 +141,11 @@ app.post("/v1/cart", async (req, res) => {
     if (pos === "admin") {
       const booking = await Booking.find();
       // console.log("admin");
-      res.status(201).json({ body: booking });
+      res.status(200).json({ body: booking });
     } else {
       const booking = await Booking.find({ email: email });
       // console.log("user");
-      res.status(201).json({ body: booking });
+      res.status(200).json({ body: booking });
     }
   } catch (err) {
     res.json({ message: err });
@@ -165,7 +165,7 @@ app.post("/v1/update-status", async (req, res) => {
     const booking = await Booking.findOne({ _id: id });
     booking.status = status;
     await booking.save();
-    res.status(201).json({ body: booking });
+    res.status(200).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
   }
@@ -287,7 +287,7 @@ app.post("/v1/book_room", async (req, res) => {
       image,
     });
 
-    res.status(201).json({ body: booking });
+    res.status(200).json({ body: booking });
   } catch (err) {
     res.json({ message: err });
   }
@@ -400,7 +400,7 @@ app.post("/v1/create_room", async (req, res) => {
 
     console.log(room);
 
-    res.status(201).json("Room created successfully");
+    res.status(200).json("Room created successfully");
   } catch (err) {
     res.json({ message: err });
   }
