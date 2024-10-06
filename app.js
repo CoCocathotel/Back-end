@@ -193,7 +193,7 @@ app.post("/v1/login", async (req, res) => {
       user.token = token;
       await user.save();
 
-      res.status(200).json(user);
+      res.json(user);
     } else {
       res.status(400).send("Invalid Credentials");
     }
