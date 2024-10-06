@@ -40,7 +40,7 @@ const corsOptions = {
 };
 
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 // app.post('*', (req, res) => {
 //   console.log("Preflight request received");
