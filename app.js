@@ -5,9 +5,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const multer = require("multer");
 
-// Import CORS middleware
-const { corsMiddleware, handlePreflight } = require('./middleware/corsMiddleware');
-
 // Models and other imports
 const User = require("./model/user");
 const Booking = require("./model/booking");
@@ -21,11 +18,20 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
+ // CORS setup with proper options
+const corsOptions = {
+  origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 // Use CORS middleware
-app.use(corsMiddleware);
+app.use(cors(corsOptions));
 
 // Handle preflight requests
-app.use(handlePreflight);
+app.options('*', (req, res) => {
+  res.sendStatus(200);  // Send a 200 OK status for preflight requests
+});
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
