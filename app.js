@@ -187,7 +187,7 @@ app.post("/v1/login", async (req, res) => {
   }
 });
 
-app.get("/v1/room", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     const room = await Room.find();
     const booking = await Booking.find();
