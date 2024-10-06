@@ -62,8 +62,19 @@ app.get("/v1/booking/:id", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.json({ message: "API is working" });
+app.get("/", async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(201).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
 });
 
 app.get("/v1/room", async (req, res) => {
