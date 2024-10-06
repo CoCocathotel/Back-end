@@ -40,7 +40,7 @@ app.use(express.json());
 
 
 app.get("/", (req, res) => {
-  res.json({ message: "API Working"});
+  res.status(200).json({ message: "API Working"});
 });
 
 app.post("/v1/getAllMember", async (req, res) => {
