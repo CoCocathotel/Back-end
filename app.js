@@ -42,10 +42,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.post('*', (req, res) => {
-  console.log("Preflight request received");
-  res.sendStatus(200);
-});
+// app.post('*', (req, res) => {
+//   console.log("Preflight request received");
+//   res.sendStatus(200);
+// });
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
