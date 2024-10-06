@@ -86,6 +86,21 @@ app.get("/", async (req, res) => {
   }
 });
 
+app.get("/v1/room", async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(200).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
 app.get("/v1/room/:type", async (req, res) => {
   try {
     const room = await Room.find({ type: req.params.type });
