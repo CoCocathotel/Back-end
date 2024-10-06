@@ -1,7 +1,7 @@
 require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
-const cors = require("cors");
+// const cors = require("cors");
 const AWS = require("aws-sdk");
 
 const User = require("./model/user");
@@ -32,16 +32,18 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+// const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
 
-const corsOptions = {
-  origin: allowedOrigins, 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+// const corsOptions = {
+//   origin: allowedOrigins, 
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// };
 
-app.options('*', cors(corsOptions)); 
+// app.options('*', cors(corsOptions)); 
+var cors = require('cors')
 
+app.use(cors())
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
