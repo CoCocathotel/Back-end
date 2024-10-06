@@ -14,7 +14,6 @@ const Book_Camera = require("./model/booking_cam");
 const multer = require("multer");
 const bodyParser = require("body-parser");
 const Room = require("./model/room");
-// const { type } = require("express/lib/response");
 
 const { createClient } = require("@supabase/supabase-js");
 
@@ -23,38 +22,24 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// const s3 = new AWS.S3({
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//     region: process.env.AWS_REGION,
-//     endpoint_url : process.env.AWS_ENDPOINT_URL
-// });
-
 const app = express();
 
 const corsOptions = {
-  origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
+  origin: 'https://cococatfrontend.vercel.app', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,  // อนุญาตส่ง cookie หรือ header ที่ต้องการการตรวจสอบสิทธิ์
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
 };
 
+// Enable CORS with the specified options
 app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
 app.options('*', cors(corsOptions));
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
-
 app.use(express.json());
-
-// const storage = multer.memoryStorage();
-// const upload = multer({ storage: storage });
-
-
-// app.options('/*', (_, res) => {
-//   res.sendStatus(200);
-// });
-
 
 app.get("/v1/booking/:id", async (req, res) => {
   try {
