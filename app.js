@@ -32,6 +32,19 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
+
+
+
+
+app.use(bodyParser.json({ limit: "5mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
+
+app.use(express.json());
+
+const storage = multer.memoryStorage();
+// const upload = multer({ storage: storage });
+
+
 const corsOptions = {
   origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -46,16 +59,6 @@ app.options('*', (req, res) => {
 
 // Use CORS middleware
 app.use(cors(corsOptions));
-
-
-
-app.use(bodyParser.json({ limit: "5mb" }));
-app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
-
-app.use(express.json());
-
-const storage = multer.memoryStorage();
-// const upload = multer({ storage: storage });
 
 
 app.get("/v1/booking/:id", async (req, res) => {
