@@ -32,7 +32,16 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
+const allowedOrigins = ['cococatfrontend.vercel.app', 'http://localhost:3000'];
+
+const corsOptions = {
+  origin: allowedOrigins, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 app.use(cors());
+
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
@@ -40,7 +49,43 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.json());
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
+
+
+app.get("/v1/booking/:id", async (req, res) => {
+  try {
+    const booking = await Booking.find({ _id: req.params.id });
+    // console.log(booking);
+    res.status(201).json({ body: booking });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+
+app.get("/v1/room", async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(201).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+app.get("/v1/room/:type", async (req, res) => {
+  try {
+    const room = await Room.find({ type: req.params.type });
+    res.status(201).json({ body: room });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
 
 app.post("/v1/register", async (req, res) => {
   try {
@@ -108,16 +153,6 @@ app.post("/v1/cart", async (req, res) => {
   }
 });
 
-app.get("/v1/booking/:id", async (req, res) => {
-  try {
-    const booking = await Booking.find({ _id: req.params.id });
-    // console.log(booking);
-    res.status(201).json({ body: booking });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
 app.post("/v1/update-status", async (req, res) => {
   try {
     const { id, status } = req.body;
@@ -168,29 +203,6 @@ app.post("/v1/login", async (req, res) => {
   }
 });
 
-app.get("/v1/room", async (req, res) => {
-  try {
-    const room = await Room.find();
-    const booking = await Booking.find();
-    res.status(201).json({
-      body: {
-        room: room,
-        booking: booking,
-      },
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-
-app.get("/v1/room/:type", async (req, res) => {
-  try {
-    const room = await Room.find({ type: req.params.type });
-    res.status(201).json({ body: room });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
 
 app.post("/v1/edit_book_room", async (req, res) => {
   const { _id, user_name_2, phone_2, special_request, pay_way, image } =
@@ -301,64 +313,6 @@ app.post("/v1/delete_book_room", async (req, res) => {
     return res.status(500).json({ message: "Error deleting booking", error });
   }
 });
-
-// app.get("/v2/superbase", async (req, res) => {
-//   try {
-//     const { data, error } = await supabase.storage.from("rooms").list("", {
-//       limit: 100,
-//       offset: 0,
-//       sortBy: { column: "name", order: "asc" },
-//     });
-
-//     if (error) {
-//       return res.status(400).send("Error searching for folders");
-//     }
-//     const room = data.map((room) => room.name);
-
-//     // get img in room superbase
-
-//     let img_data = [];
-//     for (let i = 0; i < room.length; i++) {
-//       const { data, error } = await supabase.storage
-//         .from("rooms")
-//         .list(room[i], {
-//           limit: 100,
-//           offset: 0,
-//           sortBy: { column: "name", order: "asc" },
-//         });
-
-//       if (error) {
-//         return res.status(400).send("Error searching for folders");
-//       }
-//       const img = data.map((img) => img.name);
-//       let imgjsn = { type: room[i], img: img };
-
-//       img_data.push(imgjsn);
-//     }
-//     res.status(200).json(img_data);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
-
-// app.post("/v1/superbase", async (req, res) => {
-//   try {
-//     const { type } = req.body;
-//     const { data, error } = await supabase.storage.from("rooms").list(type, {
-//       limit: 100,
-//       offset: 0,
-//       sortBy: { column: "name", order: "asc" },
-//     });
-
-//     if (error) {
-//       return res.status(400).send("Error searching for folders");
-//     }
-//     const room = data.map((room) => "/" + type + "/" + room.name);
-//     res.status(200).json(room);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
 
 app.post("/v1/create_room", async (req, res) => {
   try {
