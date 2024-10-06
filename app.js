@@ -44,6 +44,20 @@ const app = express();
 
 
 // cors use all origin 
+const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+
+const corsOptions = {
+  origin: allowedOrigins, // อนุญาตเฉพาะ origin ที่กำหนดไว้
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // อนุญาตวิธีการที่ใช้งาน
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // ถ้าต้องการอนุญาตการใช้งาน cookies หรือ credentials
+};
+
+app.use(cors(corsOptions));
+
+
+app.options('*', cors(corsOptions)); // รองรับ preflight สำหรับทุก route
+
 app.use(cors());
 
 
