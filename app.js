@@ -519,53 +519,53 @@ app.post("/v1/edit_room", async (req, res) => {
   }
 });
 
-app.delete("/v1/delete_room", async (req, res) => {
-  try {
-      const { room_id } = req.body; // Get room_id from client request
+// app.delete("/v1/delete_room", async (req, res) => {
+//   try {
+//       const { room_id } = req.body; // Get room_id from client request
 
-      // Check if room_id is provided
-      if (!room_id) {
-          return res.status(400).json({ message: "Room ID is required." });
-      }
+//       // Check if room_id is provided
+//       if (!room_id) {
+//           return res.status(400).json({ message: "Room ID is required." });
+//       }
 
-      // Find the room in the database
-      const room = await Room.findById(room_id);
-      if (!room) {
-          return res.status(404).json({ message: "Room not found." });
-      }
+//       // Find the room in the database
+//       const room = await Room.findById(room_id);
+//       if (!room) {
+//           return res.status(404).json({ message: "Room not found." });
+//       }
 
-      // Log the folder path to be deleted
-      const folderPath = `${room.type}`;
-      console.log(`Deleting folder: ${folderPath}`);
+//       // Log the folder path to be deleted
+//       const folderPath = `${room.type}`;
+//       console.log(`Deleting folder: ${folderPath}`);
 
-      // Delete the folder related to the room type from Supabase storage
-      const { error: deleteFolderError } = await supabase.storage
-          .from("rooms")
-          .remove([folderPath]);
+//       // Delete the folder related to the room type from Supabase storage
+//       const { error: deleteFolderError } = await supabase.storage
+//           .from("rooms")
+//           .remove([folderPath]);
 
-      if (deleteFolderError) {
-          console.error(`Error deleting folder: ${deleteFolderError.message}`);
-          return res
-              .status(500)
-              .json({
-                  message: "Error deleting folder from storage",
-                  error: deleteFolderError.message,
-              });
-      }
+//       if (deleteFolderError) {
+//           console.error(`Error deleting folder: ${deleteFolderError.message}`);
+//           return res
+//               .status(500)
+//               .json({
+//                   message: "Error deleting folder from storage",
+//                   error: deleteFolderError.message,
+//               });
+//       }
 
-      // Delete the room from MongoDB
-      await Room.findByIdAndDelete(room_id);
+//       // Delete the room from MongoDB
+//       await Room.findByIdAndDelete(room_id);
 
-      // Send success response when both folder and room are deleted
-      res.json({
-          message: "Room and associated folder deleted successfully",
-          room,
-      });
-  } catch (err) {
-      console.error(`Error in deleting room: ${err.message}`);
-      res.status(500).json({ message: err.message });
-  }
-});
+//       // Send success response when both folder and room are deleted
+//       res.json({
+//           message: "Room and associated folder deleted successfully",
+//           room,
+//       });
+//   } catch (err) {
+//       console.error(`Error in deleting room: ${err.message}`);
+//       res.status(500).json({ message: err.message });
+//   }
+// });
 
 
 module.exports = app;
