@@ -191,7 +191,7 @@ app.get("/v1/room", async (req, res) => {
   try {
     const room = await Room.find();
     const booking = await Booking.find();
-    res.status(201).json({
+    res.status(200).json({
       body: {
         room: room,
         booking: booking,
