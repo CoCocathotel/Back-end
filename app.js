@@ -170,6 +170,37 @@ app.post("/v1/update-status", async (req, res) => {
   }
 });
 
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!(email && password)) {
+      return res.status(400).send("All input is required");
+    }
+
+    const user = await User.findOne({ email });
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = jwt.sign(
+        { user_id: user._id, email },
+        process.env.TOKEN_KEY,
+        {
+          expiresIn: "1h",
+        }
+      );
+
+      user.token = token;
+      await user.save();
+
+      res.status(200).json(user);
+    } else {
+      res.status(400).send("Invalid Credentials");
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 app.post("/v1/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -192,7 +223,7 @@ app.post("/v1/login", async (req, res) => {
       user.token = token;
       await user.save();
 
-      res.json(user);
+      res.status(200).json(user);
     } else {
       res.status(400).send("Invalid Credentials");
     }
