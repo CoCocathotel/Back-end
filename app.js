@@ -22,30 +22,16 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// const s3 = new AWS.S3({
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//     region: process.env.AWS_REGION,
-//     endpoint_url : process.env.AWS_ENDPOINT_URL
-// });
-
 const app = express();
 
-// const corsOptions = {
-//   origin: '*', // Replace '*' with your specific frontend URL if possible for security reasons
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-//   credentials: true,
-// };
+const corsOptions = {
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: ['Content-Type']
+};
 
-
-app.use(cors());
-
-// app.post('*', (req, res) => {
-//   console.log("Preflight request received");
-//   res.sendStatus(200);
-// });
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); 
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
