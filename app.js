@@ -40,7 +40,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 
 app.use(bodyParser.json({ limit: "5mb" }));
@@ -62,6 +62,9 @@ app.get("/v1/booking/:id", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.json({ message: "API is working" });
+});
 
 app.get("/v1/room", async (req, res) => {
   try {
