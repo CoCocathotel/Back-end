@@ -1,24 +1,37 @@
-
 require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
-const bodyParser = require("body-parser");
-const multer = require("multer");
+const cors = require("cors");
+const AWS = require("aws-sdk");
 
-// Models and other imports
 const User = require("./model/user");
-const Booking = require("./model/booking");
-const Room = require("./model/room");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const auth = require("./middleware/auth");
+const Booking = require("./model/booking");
+const Camera = require("./model/camera");
+const Book_Camera = require("./model/booking_cam");
+const multer = require("multer");
+const bodyParser = require("body-parser");
+const Room = require("./model/room");
+// const { type } = require("express/lib/response");
+
 const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
+
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// const s3 = new AWS.S3({
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//     region: process.env.AWS_REGION,
+//     endpoint_url : process.env.AWS_ENDPOINT_URL
+// });
 
 const app = express();
 
- // CORS setup with proper options
 const corsOptions = {
   origin: '*', // You can replace '*' with the specific origin like 'http://your-frontend-url.com'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -32,6 +45,7 @@ app.use(cors(corsOptions));
 app.options('*', (req, res) => {
   res.sendStatus(200);  // Send a 200 OK status for preflight requests
 });
+
 
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
