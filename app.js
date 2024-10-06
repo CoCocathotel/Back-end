@@ -32,15 +32,15 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
-const corsOptions = {
-  origin: '*', // Replace '*' with your specific frontend URL if possible for security reasons
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true,
-};
+// const corsOptions = {
+//   origin: '*', // Replace '*' with your specific frontend URL if possible for security reasons
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//   credentials: true,
+// };
 
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 // app.post('*', (req, res) => {
 //   console.log("Preflight request received");
