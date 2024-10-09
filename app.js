@@ -3,6 +3,8 @@ require("./config/database").connect();
 const express = require("express");
 const mongoose = require('mongoose');
 const cors = require("cors");
+const compression = require("compression");
+
 // const AWS = require("aws-sdk");
 
 const User = require("./model/user");
@@ -13,9 +15,12 @@ const Booking = require("./model/booking");
 const multer = require("multer");
 const bodyParser = require("body-parser");
 const Room = require("./model/room");
+const Home = require("./model/home");
+const Footer = require("./model/footer");
 // const { type } = require("express/lib/response");
 
 const { createClient } = require("@supabase/supabase-js");
+
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -23,35 +28,90 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 
+app.use(compression());
+
 const corsOptions = {
   origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders:  ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); 
+app.options('*', cors(corsOptions));
 
-app.use(bodyParser.json({ limit: "5mb" }));
-app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
-
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json());
 
-// app.use(require("./routes"));
-// app.use('/', ( req, res ) => {
-//   res.status(200).json({
-//     status: 'success',
-//     message: "Api is to the API..."
-//   });
-// })
+// app.use(express.urlencoded({ extended: true }));
+// app.use(compression());
 
-// app.use('*', ( req, res ) => {
-//   res.status(404).json({
-//     status: 'error',
-//     message: "Route not found"
-//   });
-// });
 
+app.get("/footer", async (req, res) => {
+  try {
+    const footer = await Footer.find();
+    res.status(200).json({ body: footer });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+
+app.post("/update-footer", async (req, res) => {
+  try {
+    const { _id, headFooter, addressFooter, phoneFooter, lineFooter, tiktokFooter } = req.body;
+    const footer = await Footer.findById(_id);
+
+    if (!footer) {
+      return res.status(404).send("Footer data not found");
+    }
+
+    footer.headFooter = headFooter;
+    footer.addressFooter = addressFooter;
+    footer.phoneFooter = phoneFooter;
+    footer.lineFooter = lineFooter;
+    footer.tiktokFooter = tiktokFooter;
+
+    await footer.save();
+
+    res.status(200).send("Footer data updated successfully");
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+app.post("/create-footer", async (req, res) => {
+  try {
+    const { headFooter, addressFooter, phoneFooter, lineFooter, tiktokFooter } = req.body;
+    const footer = await Footer.create({
+      headFooter,
+      addressFooter,
+      phoneFooter,
+      lineFooter,
+      tiktokFooter,
+    });
+
+    res.status(200).send("Footer data created successfully");
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+
+
+app.get("/", async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(200).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
 
 // home 
 app.use('/home', async (req, res) => {
@@ -68,11 +128,175 @@ app.use('/home', async (req, res) => {
     res.json({ message: err });
   }
 });
-// footer
-// rule
+
+const upLoadSupeebase = (file) => {
+  const base64 = file.replace(/^data:image\/\w+;base64,/, "");
+  const buffer = Buffer.from(base64, "base64");
+  return buffer;
+};
+
+app.post('/addHome', async (req, res) => {
+  const { heroImage, title, reviewImage, mapImage, mapDetail } = req.body;
+
+  const uploadImages = async (images, folderName) => {
+    if (!images || images.length === 0) return [];
+
+    try {
+      const imageNames = images.map((file) => file.name);
+      const imageBase64 = images.map((file) => upLoadSupeebase(file));
 
 
+      const uploadResults = await Promise.all(
+        imageNames.map((name, index) =>
+          supabase.storage
+            .from("homePage")
+            .upload(`${folderName}/${index}-${Date.now().toString()}`, imageBase64[index], {
+              upsert: false,
+              contentType: "image/png",
+            })
+        ),
+      );
 
+      const errors = uploadResults.filter(({ error }) => error);
+      if (errors.length > 0) {
+        console.error(errors);
+        throw new Error(`Error uploading ${folderName} images`);
+      }
+
+      const uploadedFileNames = uploadResults.map(({ data }) => data.path);
+      console.log(uploadedFileNames);
+      return uploadedFileNames
+      // return uploadedFileNames.map((name) => {
+      //   const { publicURL } = supabase.storage
+      //     .from("homePage")
+      //     .getPublicUrl(`${name}`);
+      //     console.log(name);
+      //   return name;
+      // });
+    } catch (err) {
+      console.error(`Error while uploading ${folderName} images:`, err);
+      throw new Error(`Failed to upload images for ${folderName}`);
+    }
+  };
+
+  try {
+
+    let heroImageUrls = [];
+    let reviewImageUrls = [];
+    let mapImageUrls = [];
+
+    heroImageUrls = await uploadImages(heroImage, 'heroImage');
+    reviewImageUrls = await uploadImages(reviewImage, 'reviewImage');
+    mapImageUrls = await uploadImages([mapImage], 'mapImage')
+
+    console.log(heroImageUrls, reviewImageUrls, mapImageUrls);
+
+    const home = await Home.create({
+      heroImage: heroImageUrls,
+      title,
+      reviewImage: reviewImageUrls,
+      mapImage: mapImageUrls,
+      mapDetail,
+    });
+
+    res.status(200).send("Images uploaded and saved successfully");
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+
+ app.patch('/updateHome', async (req, res) => {
+  const { _id, heroImage, title, reviewImage, mapImage, mapDetail } = req.body;
+  const home = await Home.findById(_id);
+
+  if (!home) {
+    return res.status(404).send("Home data not found");
+  }
+
+  const uploadImages = async (images, folderName) => {
+    try {
+      const imageBase64 = images.map((file) => upLoadSupeebase(file));
+
+      // อัปโหลดรูปภาพไปที่ Supabase โดยไม่ต้องรอผลลัพธ์
+      const uploadResults = await Promise.all(
+        images.map((file, index) =>
+          supabase.storage
+            .from("homePage")
+            .upload(`${folderName}/${index}-${Date.now().toString()}`, imageBase64[index], {
+              upsert: false,
+              contentType: "image/png",
+            })
+        )
+      );
+
+      const uploadedFileNames = uploadResults.map(({ data }) => data?.path || null); // ไม่สนใจว่าอัปโหลดได้หรือไม่
+      return uploadedFileNames.filter((path) => path); // return เฉพาะ path ที่อัปโหลดสำเร็จ
+    } catch (error) {
+      console.error('Image upload failed:', error); // ยัง log error ไว้ แต่ไม่ส่ง error กลับ
+      return [];
+    }
+  };
+
+  try {
+    // Upload heroImage
+    if (heroImage) {
+      const heroImageUrl = await uploadImages(heroImage, 'heroImage');
+      home.heroImage = heroImageUrl;
+    }
+
+    // Upload reviewImage
+    if (reviewImage) {
+      const reviewImageUrl = await uploadImages(reviewImage, 'reviewImage');
+      home.reviewImage = reviewImageUrl;
+    }
+
+    // Upload mapImage
+    if (mapImage) {
+      const mapImageUrl = await uploadImages([mapImage], 'mapImage');
+      home.mapImage = mapImageUrl;
+    }
+
+    // Update other fields
+    home.title = title;
+    home.mapDetail = mapDetail;
+
+    // Save the updated home data
+    const updatedHome = await Home.findByIdAndUpdate(
+      _id,
+      {
+        heroImage: home.heroImage,
+        title: home.title,
+        reviewImage: home.reviewImage,
+        mapImage: home.mapImage,
+        mapDetail: home.mapDetail,
+      },
+      { new: true }
+    );
+
+    console.log(updatedHome);
+
+    res.status(200).send("Home data updated successfully");
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+
+app.get('/getHome', async (req, res) => {
+
+  try {
+    const home = await Home.find();
+    if (!home) {
+      return res.status(404).send("Home data not found");
+    }
+    res.status(200).json({
+      body: home,
+    });
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
 
 app.post("/v1/register", async (req, res) => {
   try {
@@ -172,7 +396,7 @@ app.post("/v1/update-status", async (req, res) => {
 app.post("/v1/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!(email && password)) {
       return res.status(400).send("All input is required");
     }
@@ -197,21 +421,6 @@ app.post("/v1/login", async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-  }
-});
-
-app.get("/", async (req, res) => {
-  try {
-    const room = await Room.find();
-    const booking = await Booking.find();
-    res.status(200).json({
-      body: {
-        room: room,
-        booking: booking,
-      },
-    });
-  } catch (err) {
-    res.json({ message: err });
   }
 });
 
@@ -288,7 +497,7 @@ app.post("/v1/book_room", async (req, res) => {
 
     let total_cats_All = total_cats;
     let collect = [];
-    
+
     // Distribute total cats among rooms
     for (let i = 0; i < total_rooms; i++) {
       if (total_cats_All > 0) {
@@ -337,7 +546,6 @@ app.post("/v1/book_room", async (req, res) => {
     res.status(500).json({ message: "Failed to create booking", error: err.message });
   }
 });
-
 
 app.post("/v1/delete_book_room", async (req, res) => {
   const { _id } = req.body;
@@ -548,51 +756,79 @@ app.post("/v1/edit_room", async (req, res) => {
 
 app.delete("/v1/delete_room", async (req, res) => {
   try {
-      const { room_id } = req.body; // Get room_id from client request
+    const { room_id } = req.body; // Get room_id from client request
 
-      // Check if room_id is provided
-      if (!room_id) {
-          return res.status(400).json({ message: "Room ID is required." });
-      }
+    // Check if room_id is provided
+    if (!room_id) {
+      return res.status(400).json({ message: "Room ID is required." });
+    }
 
-      // Find the room in the database
-      const room = await Room.findById(room_id);
-      if (!room) {
-          return res.status(404).json({ message: "Room not found." });
-      }
+    // Find the room in the database
+    const room = await Room.findById(room_id);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found." });
+    }
 
-      // Log the folder path to be deleted
-      const folderPath = `${room.type}`;
-      console.log(`Deleting folder: ${folderPath}`);
+    // Log the folder path to be deleted
+    const folderPath = `${room.type}`;
+    console.log(`Deleting folder: ${folderPath}`);
 
-      // Delete the folder related to the room type from Supabase storage
-      const { error: deleteFolderError } = await supabase.storage
-          .from("rooms")
-          .remove([folderPath]);
+    // Delete the folder related to the room type from Supabase storage
+    const { error: deleteFolderError } = await supabase.storage
+      .from("rooms")
+      .remove([folderPath]);
 
-      if (deleteFolderError) {
-          console.error(`Error deleting folder: ${deleteFolderError.message}`);
-          return res
-              .status(500)
-              .json({
-                  message: "Error deleting folder from storage",
-                  error: deleteFolderError.message,
-              });
-      }
+    if (deleteFolderError) {
+      console.error(`Error deleting folder: ${deleteFolderError.message}`);
+      return res
+        .status(500)
+        .json({
+          message: "Error deleting folder from storage",
+          error: deleteFolderError.message,
+        });
+    }
 
-      // Delete the room from MongoDB
-      await Room.findByIdAndDelete(room_id);
+    // Delete the room from MongoDB
+    await Room.findByIdAndDelete(room_id);
 
-      // Send success response when both folder and room are deleted
-      res.json({
-          message: "Room and associated folder deleted successfully",
-          room,
-      });
+    // Send success response when both folder and room are deleted
+    res.json({
+      message: "Room and associated folder deleted successfully",
+      room,
+    });
   } catch (err) {
-      console.error(`Error in deleting room: ${err.message}`);
-      res.status(500).json({ message: err.message });
+    console.error(`Error in deleting room: ${err.message}`);
+    res.status(500).json({ message: err.message });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 module.exports = app;
