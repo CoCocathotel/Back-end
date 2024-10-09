@@ -1,8 +1,9 @@
 require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
+const mongoose = require('mongoose');
 const cors = require("cors");
-const AWS = require("aws-sdk");
+// const AWS = require("aws-sdk");
 
 const User = require("./model/user");
 const bcrypt = require("bcryptjs");
@@ -36,19 +37,41 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
 app.use(express.json());
 
+// app.use(require("./routes"));
+// app.use('/', ( req, res ) => {
+//   res.status(200).json({
+//     status: 'success',
+//     message: "Api is to the API..."
+//   });
+// })
 
-// app.get("/", (req, res) => {
-//   res.status(200).json({ message: "API Working"});
+// app.use('*', ( req, res ) => {
+//   res.status(404).json({
+//     status: 'error',
+//     message: "Route not found"
+//   });
 // });
 
-// app.post("/v1/getAllMember", async (req, res) => {
-//   try {
-//     const user = await User.find();
-//     res.status(200).json({ body: user });
-//   } catch (err) {
-//     res.json({ message: err });
-//   }
-// });
+
+// home 
+app.use('/home', async (req, res) => {
+  try {
+    const room = await Room.find();
+    const booking = await Booking.find();
+    res.status(200).json({
+      body: {
+        room: room,
+        booking: booking,
+      },
+    });
+  } catch (err) {
+    res.json({ message: err });
+  }
+});
+// footer
+// rule
+
+
 
 
 app.post("/v1/register", async (req, res) => {
@@ -234,6 +257,9 @@ app.post("/v1/edit_book_room", async (req, res) => {
 });
 
 app.post("/v1/book_room", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const {
       room_name,
@@ -256,40 +282,62 @@ app.post("/v1/book_room", async (req, res) => {
       image,
     } = req.body;
 
-    // fan-room
-    // ac-connecting-room
-    // ac-standard-room
+    if (typeof total_cats === 'undefined' || total_cats === null) {
+      throw new Error("total_cats is required");
+    }
 
-    // if(!(room_name && email && check_in_date && check_out_date && total_price && total_cats && status && pay_way && total_cameras && image)){
-    //     return res.status(400).send("All input is required");
-    // }
+    let total_cats_All = total_cats;
+    let collect = [];
+    
+    // Distribute total cats among rooms
+    for (let i = 0; i < total_rooms; i++) {
+      if (total_cats_All > 0) {
+        const cats_in_room = Math.min(1, total_cats_All);
+        collect.push(cats_in_room);
+        total_cats_All -= cats_in_room;
+      } else {
+        collect.push(0);
+      }
+    }
 
-    const booking = await Booking.create({
-      room_name,
-      type,
-      email,
-      user_name,
-      phone,
-      user_name_2,
-      phone_2,
-      special_request,
-      check_in_date,
-      check_out_date,
-      total_price,
-      total_cats,
-      total_rooms,
-      status,
-      pay_way,
-      total_cameras,
-      optional_services,
-      image,
-    });
+    for (let i = 0; i < total_rooms; i++) {
+      await Booking.create([
+        {
+          room_name,
+          type,
+          email,
+          user_name,
+          phone,
+          user_name_2,
+          phone_2,
+          special_request,
+          optional_services,
+          check_in_date,
+          check_out_date,
+          total_price,
+          total_cats: collect[i],
+          total_rooms: 1,
+          status,
+          pay_way,
+          total_cameras,
+          image,
+        }
+      ], { session });
+    }
 
-    res.status(201).json({ body: booking });
+    await session.commitTransaction();
+    session.endSession();
+    console.log("Booking created successfully");
+    res.status(201).json({ message: "Booking created successfully" });
+
   } catch (err) {
-    res.json({ message: err });
+    await session.abortTransaction();
+    session.endSession();
+    console.error(err);
+    res.status(500).json({ message: "Failed to create booking", error: err.message });
   }
 });
+
 
 app.post("/v1/delete_book_room", async (req, res) => {
   const { _id } = req.body;
