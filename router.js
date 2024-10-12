@@ -3,3 +3,5 @@ const router = express.Router();
 
 
 router.use('/', require('./modules/home')); 
+
+module.exports = router;
