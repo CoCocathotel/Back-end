@@ -1,4 +1,3 @@
-
 const model = {
     Room: require("./model/room"),
     User: require("./model/user"),
