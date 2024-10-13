@@ -3,9 +3,6 @@ require("./config/database").connect();
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
 const bodyParser = require("body-parser");
 
 const app = express();
