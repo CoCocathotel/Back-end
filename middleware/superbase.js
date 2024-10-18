@@ -44,7 +44,7 @@ exports.updateImage = async (file, oldImagePath, bucketName, slug) => {
     if (oldImagePath) {
         await exports.deleteImage(oldImagePath, bucketName, slug);
     }
-    let url  = await exports.uploadImage(file, bucketName, slug);
+    let url = await exports.uploadImage(file, bucketName, slug);
 
     return url;
 };

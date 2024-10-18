@@ -73,7 +73,7 @@ exports.updateHome = async (req, res) => {
       console.log("0", oldLinkReview);
       LinkReview = await Promise.all(oldLinkReview.map((img, index) => Image.deleteImage(img, "review")));
       LinkReview = home.reviewImage.filter((img) => !oldLinkReview.includes(img));
-    } else if (oldLinkReview.length > 0 && reviewImageNew.length > 0){
+    } else if (oldLinkReview.length > 0 && reviewImageNew.length > 0) {
       LinkReview = await Promise.all(oldLinkReview.map((img, index) => Image.deleteImage(img, "review")));
       LinkReview = await Promise.all(reviewImageNew.map((img, index) => Image.uploadImage(img, "review")));
       notIncludeOld = home.reviewImage.filter((img) => !oldLinkReview.includes(img));
@@ -99,12 +99,12 @@ exports.updateHome = async (req, res) => {
       console.log("0", oldLinkHero);
       LinkHero = await Promise.all(oldLinkHero.map((img, index) => Image.deleteImage(img, "home")));
       LinkHero = home.heroImage.filter((img) => !oldLinkHero.includes(img));
-    }else if (oldLinkHero.length > 0 && heroImageNew.length > 0){
+    } else if (oldLinkHero.length > 0 && heroImageNew.length > 0) {
       LinkHero = await Promise.all(oldLinkHero.map((img, index) => Image.deleteImage(img, "home")));
       LinkHero = await Promise.all(heroImageNew.map((img, index) => Image.uploadImage(img, "home")));
       notIncludeOld = home.heroImage.filter((img) => !oldLinkHero.includes(img));
       LinkHero = [...notIncludeOld, ...LinkHero];
-    }else if (oldLinkHero.length > 0) {
+    } else if (oldLinkHero.length > 0) {
       console.log("1", LinkHero, heroImageNew, oldLinkHero);
       LinkHero = await Promise.all(heroImageNew.map((img, index) => Image.updateImage(img, oldLinkHero[index], "home")));
     } else if (heroImageNew.length > 0) {
@@ -117,14 +117,23 @@ exports.updateHome = async (req, res) => {
     }
 
     if (mapImage) {
+      console.log("1 img");
       const oldLinkMap = home.mapImage;
       if (oldLinkMap !== null) {
+        console.log("2 img");
+
         if (oldLinkMap != mapImage) {
-          LinkMap = await Image.updateImage(oldLinkMap, "map");
+          console.log("3 img");
+
+          LinkMap = await Image.updateImage(mapImage, oldLinkMap, "map");
         } else {
+          console.log("4 img");
+
           LinkMap = mapImage;
         }
       } else {
+        console.log("5 img");
+
         LinkMap = await Image.uploadImage(mapImage, "map");
       }
 

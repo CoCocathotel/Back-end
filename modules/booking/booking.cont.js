@@ -66,7 +66,6 @@ exports.createBooking = async (req, res) => {
             LinkSlip = await Image.uploadImage(image, "slip");
         }
 
-
         let total_cats_All = total_cats;
         let collect = [];
 
@@ -116,5 +115,37 @@ exports.createBooking = async (req, res) => {
         session.endSession();
         console.error(err);
         res.status(500).json({ message: "Failed to create booking", error: err.message });
+    }
+};
+
+exports.getAllEvent = async (req, res) => {
+    const { role } = req.body
+    try {
+        const booking = await Booking.find();
+        if (!booking) {
+            return res.status(404).send("Booking data not found");
+        }
+        res.status(200).json({
+            body: booking,
+        });
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
+exports.changeStatus = async (req, res) => {
+    const { id, status } = req.body;
+    try {
+        const booking = await Booking.findOne({ _id: id });
+        if (!booking) {
+            return res.status(404).send("Booking data not found");
+        }
+        booking.status = status;
+        await booking.save();
+        res.status(200).json({
+            body: booking,
+        });
+    } catch (error) {
+        res.status(400).send(error.message);
     }
 };
