@@ -17,9 +17,7 @@ const upLoadSupeebase = (file) => {
 exports.uploadImage = async (file, bucketName, slug) => {
     file = upLoadSupeebase(file);
     if (file) {
-
         var fileName = uuidv4() + Date.now().toString();
-
         slug = slug ? `${slug}/` : '';
         const { data, error } = await supabase.storage
             .from(bucketName)
