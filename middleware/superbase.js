@@ -55,8 +55,7 @@ exports.deleteImage = async (imagePath, bucketName, slug) => {
 
     const match = imagePath.match(regex);
     slug = slug ? `${slug}/` : '';
-
-
+    
     if (!match) {
         console.error('Error: Image path did not match the expected format:', imagePath);
         return null;

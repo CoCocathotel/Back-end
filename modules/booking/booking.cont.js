@@ -1,4 +1,4 @@
-const { Booking } = require('../../middleware/db');
+const { Booking, Room } = require('../../middleware/db');
 const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
 
@@ -16,16 +16,103 @@ exports.getBooking = async (req, res) => {
     }
 };
 
-exports.getOneBooking = async (req, res) => {
+exports.getOneBookingById = async (req, res) => {
     const { id } = req.params;
     try {
         const booking = await Booking.findOne({ _id: id });
         if (!booking) {
             return res.status(404).send("Booking data not found");
         }
+
+        const room  = await Room.findOne({ type: booking.type });
+
+        const data = {
+            ...booking._doc,
+            imageRoom: room ? room.image : null
+        }
+
+        res.status(200).json({
+            body: data,
+        });
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
+exports.getOneBookingByType = async (req, res) => {
+    const { type } = req.params;
+    try {
+        const booking = await Booking.findOne({ type: type });
+        if (!booking) {
+            return res.status(404).send("Booking data not found");
+        }
+
+       
+
+        // const correspondingRoom = rooms.find(room => room.type === booking.type);
+        //     return {
+        //         _id: booking._id,
+        //         room_name: booking.room_name,
+        //         type: booking.type,
+        //         email: booking.email,
+        //         user_name: booking.user_name,
+        //         phone: booking.phone,
+        //         user_name_2: booking.user_name_2,
+        //         phone_2: booking.phone_2,
+        //         special_request: booking.special_request,
+        //         check_in_date: booking.check_in_date,
+        //         check_out_date: booking.check_out_date,
+        //         total_price: booking.total_price,
+        //         total_cats: booking.total_cats,
+        //         total_rooms: booking.total_rooms,
+        //         status: booking.status,
+        //         pay_way: booking.pay_way,
+        //         total_cameras: booking.total_cameras,
+        //         optional_services: booking.optional_services,
+        //         image: booking.image,
+        //         imageRoom: correspondingRoom ? correspondingRoom.image : null
+        //     };
+
         res.status(200).json({
             body: booking,
         });
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
+exports.updateBooking = async (req, res) => {
+    try {
+        const { user_name_2, phone_2, special_request, pay_way, image } = req.body;
+        const { id } = req.params;
+
+        const booking = await Booking.findOne({ _id: id });
+        if (!booking) {
+            return res.status(404).send("Booking data not found");
+        }
+
+        // update image 
+
+        let LinkImage = '';
+
+        if(image){
+            LinkImage = await Image.uploadImage(image, "slip");
+        }
+
+        const updatedBooking = await Booking.findByIdAndUpdate
+            (id, {
+                user_name_2,
+                phone_2,
+                special_request,
+                pay_way,
+                image : LinkImage !== null ? LinkImage : booking.image,
+            },
+            { new: true });
+    
+        res.status(200).json({
+            body: updatedBooking,
+        });
+
     } catch (error) {
         res.status(400).send(error.message);
     }
@@ -119,14 +206,43 @@ exports.createBooking = async (req, res) => {
 };
 
 exports.getAllEvent = async (req, res) => {
-    const { role } = req.body
+    const { role } = req.body;
     try {
-        const booking = await Booking.find();
-        if (!booking) {
-            return res.status(404).send("Booking data not found");
+        const bookings = await Booking.find();
+        const rooms = await Room.find();
+
+        if (!bookings || bookings.length === 0) {
+            return res.status(404).send("Booking data not dsadasd");
         }
+
+        const bookingDetails = bookings.map((booking) => {
+            const correspondingRoom = rooms.find(room => room.type === booking.type);
+            return {
+                _id: booking._id,
+                room_name: booking.room_name,
+                type: booking.type,
+                email: booking.email,
+                user_name: booking.user_name,
+                phone: booking.phone,
+                user_name_2: booking.user_name_2,
+                phone_2: booking.phone_2,
+                special_request: booking.special_request,
+                check_in_date: booking.check_in_date,
+                check_out_date: booking.check_out_date,
+                total_price: booking.total_price,
+                total_cats: booking.total_cats,
+                total_rooms: booking.total_rooms,
+                status: booking.status,
+                pay_way: booking.pay_way,
+                total_cameras: booking.total_cameras,
+                optional_services: booking.optional_services,
+                image: booking.image,
+                imageRoom: correspondingRoom ? correspondingRoom.image : null
+            };
+        });
+
         res.status(200).json({
-            body: booking,
+            body: bookingDetails,
         });
     } catch (error) {
         res.status(400).send(error.message);
