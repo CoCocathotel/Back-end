@@ -1,6 +1,7 @@
 const { Booking, Room } = require('../../middleware/db');
 const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
+const sendMail = require('../../middleware/sendmail');
 
 exports.getBooking = async (req, res) => {
     try {
@@ -258,6 +259,11 @@ exports.changeStatus = async (req, res) => {
         }
         booking.status = status;
         await booking.save();
+
+        const to = 'veeteteh29@gmail.com'
+        const subject = 'Booking Status'
+        const htmlContent = `<h1>Your booking status has been changed to ${status}</h1>`
+        sendMail(to, subject, htmlContent)
         res.status(200).json({
             body: booking,
         });
