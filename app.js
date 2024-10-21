@@ -3,7 +3,17 @@ require("./config/database").connect();
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const multer = require("multer");
 const bodyParser = require("body-parser");
+
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 
@@ -28,7 +38,5 @@ app.use(require('./router/router'));
 app.get("/*", (req, res) => {
   res.send("Welcome to the API");
 });
-
-
 
 module.exports = app;
