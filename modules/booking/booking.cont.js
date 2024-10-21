@@ -262,8 +262,9 @@ exports.changeStatus = async (req, res) => {
 
         const to = 'veeteteh29@gmail.com'
         const subject = 'Booking Status'
-        const htmlContent = `<h1>Your booking status has been changed to ${status}</h1>`
+        const htmlContent = `<h1>Your fucking jian have fuck booking status has been changed to ${status}</h1>`
         sendMail(to, subject, htmlContent)
+
         res.status(200).json({
             body: booking,
         });
