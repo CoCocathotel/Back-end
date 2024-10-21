@@ -258,7 +258,7 @@ exports.changeStatus = async (req, res) => {
         }
         booking.status = status;
         await booking.save();
-        res.status(200).json({
+        res.status(2024).json({
             body: booking,
         });
     } catch (error) {
