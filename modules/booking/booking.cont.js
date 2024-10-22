@@ -260,10 +260,9 @@ exports.changeStatus = async (req, res) => {
         booking.status = status;
         await booking.save();
 
-        const to = 'veeteteh29@gmail.com'
-        const subject = 'Booking Status'
-        const htmlContent = status
-        sendMail(to, subject, htmlContent)
+        const to = booking.email; // Send to the user's email
+        const subject = 'Booking Status Update';
+        sendMail(to, subject, booking); // Pass the booking object to personalize the email
         res.status(200).json({
             body: booking,
         });
@@ -271,3 +270,4 @@ exports.changeStatus = async (req, res) => {
         res.status(400).send(error.message);
     }
 };
+
