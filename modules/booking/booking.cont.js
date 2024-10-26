@@ -2,25 +2,8 @@
 const { Booking, Room } = require('../../middleware/db');
 const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
-const { formatEmail } = require('../../utils/tools');
-const nodemailer = require("nodemailer");
+const { sendMail } = require('../../middleware/mailer');
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    port: 465,
-    secure: true,
-    logger: true,
-    debug: true,
-    secureConnection: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-    },
-    tls: {
-        rejectUnauthorized: true
-    }
-});
-// Get all bookings
 exports.getBooking = async (req, res) => {
     try {
         const booking = await Booking.find();
@@ -154,9 +137,9 @@ exports.createBooking = async (req, res) => {
                 collect.push(0);
             }
         }
-
+        let booking;
         for (let i = 0; i < total_rooms; i++) {
-            await Booking.create([
+        booking = await Booking.create([
                 {
                     room_name,
                     type,
@@ -179,7 +162,6 @@ exports.createBooking = async (req, res) => {
                 }
             ], { session });
         }
-
         await session.commitTransaction();
         session.endSession();
         res.status(201).json({ message: "Booking created successfully" });
@@ -225,39 +207,13 @@ exports.changeStatus = async (req, res) => {
         if (!booking) {
             return res.status(404).send("Booking data not found");
         }
-
         booking.status = status;
-        await booking.save();
-
-      
-        if(status === 'pass') {
-            emailSubject = 'Booking Successful';
-            emailText = (await formatEmail(booking)).toString();
-        }else if(status === 'failed') {
-            emailSubject = 'Booking Rejected';
-            emailText = (await formatEmail(booking)).toString();
-        }else{
-            emailSubject = 'Booking Pending';
-            emailText = (await formatEmail(booking)).toString();
-        }
-        
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: 'adisak.2457@gmail.com',
-            subject: emailSubject,
-            html: emailText
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log('Error sending email:', error);
-            } else {
-                console.log('Email sent:', info.response);
-            }
-        });
-
+        const updatedBooking = await Promise.all([
+            booking.save(),
+            sendMail(booking)
+        ]);
         res.status(200).json({
-            body: booking,
+            body: updatedBooking,
         });
     } catch (error) {
         res.status(400).send(error.message);
