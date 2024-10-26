@@ -234,20 +234,60 @@ exports.changeStatus = async (req, res) => {
         let emailSubject, emailText;
 
         if (status === 'pass') {
-            emailSubject = 'Booking Confirmation';
-            emailText = `Dear ${booking.user_name},\n\nYour booking for ${booking.room_name} has been confirmed! Your check-in date is ${booking.check_in_date}, and the check-out date is ${booking.check_out_date}.\n\nThank you for choosing our service!`;
+            emailSubject = 'Your Booking Confirmation';
+            emailText = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 600px; margin: auto; border-radius: 8px; border: 1px solid #ddd;">
+                <div style="background-color: #E9F8FF; color: black; padding: 10px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h2>Dear ${booking.user_name},</h2>
+                </div>
+                <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
+                    <p>We are pleased to confirm your booking for <strong>${booking.room_name}</strong>. Your stay is scheduled from <strong>${booking.check_in_date}</strong> to <strong>${booking.check_out_date}</strong>.</p>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p><strong>Room Name:</strong> ${booking.room_name}</p>
+                        <p><strong>Check-in Date:</strong> ${booking.check_in_date}</p>
+                        <p><strong>Check-out Date:</strong> ${booking.check_out_date}</p>
+                        <p><strong>Total Price:</strong> ${booking.total_price}</p>
+                    </div>
+                    <p>Thank you for choosing our service! We are excited to welcome you soon.</p>
+                    <p>If you have any questions, feel free to contact us via:</p>
+                    <p><strong>Phone:</strong> +1 (234) 567-890</p>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 20px;">
+                    <p>Best regards,<br>Your Service Team</p>
+                </div>
+            </div>`;
         } else if (status === 'failed') {
-            emailSubject = 'Booking Cancellation';
-            emailText = `Dear ${booking.user_name},\n\nWe regret to inform you that your booking for ${booking.room_name} could not be processed. Please try again or contact customer support for assistance.\n\nWe apologize for the inconvenience.`;
+            emailSubject = 'Booking Unsuccessful';
+            emailText = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 600px; margin: auto; border-radius: 8px; border: 1px solid #ddd;">
+                <div style="background-color: #E9F8FF; color: black; padding: 10px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h2>Dear ${booking.user_name},</h2>
+                </div>
+                <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
+                    <p>We regret to inform you that your booking for <strong>${booking.room_name}</strong> could not be processed. Please try again or contact our support team for assistance.</p>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p><strong>Room Name:</strong> ${booking.room_name}</p>
+                        <p><strong>Check-in Date:</strong> ${booking.check_in_date}</p>
+                        <p><strong>Check-out Date:</strong> ${booking.check_out_date}</p>
+                        <p><strong>Total Price:</strong> ${booking.total_price}</p>
+                    </div>
+                    <p>We apologize for the inconvenience and hope to assist you in the future.</p>
+                    <p>You can reach us through the following channels:</p>
+                    <p><strong>Phone:</strong> +1 (234) 567-890</p>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 20px;">
+                    <p>Best regards,<br>Your Service Team</p>
+                </div>
+            </div>`;
         }
 
         // Send the email if it's a pass or failed status
         if (status === 'pass' || status === 'failed') {
             const mailOptions = {
                 from: process.env.EMAIL_USER, // Sender address
-                to: booking.email,             // booking.email , if want to test use'mail@email.com'
+                to: 'karwit2544@gmail.com',             // booking.email , if want to test use'mail@email.com'
                 subject: emailSubject,        // Subject line
-                text: emailText               // Plain text body
+                html: emailText               // Plain text body
             };
 
             // Send email notification
