@@ -119,7 +119,7 @@ exports.createBooking = async (req, res) => {
         if (typeof total_cats === 'undefined' || total_cats === null) {
             throw new Error("total_cats is required");
         }
-
+        
         let LinkSlip = '';
         if (image) {
             LinkSlip = await Image.uploadImage(image, "slip");
@@ -137,9 +137,8 @@ exports.createBooking = async (req, res) => {
                 collect.push(0);
             }
         }
-        let booking;
         for (let i = 0; i < total_rooms; i++) {
-        booking = await Booking.create([
+        await Booking.create([
                 {
                     room_name,
                     type,
@@ -156,7 +155,7 @@ exports.createBooking = async (req, res) => {
                     total_cats: collect[i],
                     total_rooms: 1,
                     status,
-                    pay_way,
+                    pay_way: pay_way ? pay_way : 'walk-in',
                     total_cameras,
                     image: LinkSlip,
                 }
@@ -164,7 +163,29 @@ exports.createBooking = async (req, res) => {
         }
         await session.commitTransaction();
         session.endSession();
-        res.status(201).json({ message: "Booking created successfully" });
+        const updatedBooking = await Promise.all([
+            sendMail({
+                room_name,
+                type,
+                email,
+                user_name,
+                // phone,
+                // user_name_2,
+                // phone_2,
+                // special_request,
+                // optional_services,
+                check_in_date,
+                check_out_date,
+                total_price,
+                // total_cats,
+                // total_rooms,
+                status,
+                pay_way,
+                total_cameras,
+                // image,
+            })
+        ]);
+        res.status(201).json({ message: updatedBooking });
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
@@ -207,7 +228,6 @@ exports.changeStatus = async (req, res) => {
         if (!booking) {
             return res.status(404).send("Booking data not found");
         }
-        booking.status = status;
         const updatedBooking = await Promise.all([
             booking.save(),
             sendMail(booking)

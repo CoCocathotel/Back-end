@@ -1,4 +1,6 @@
 exports.formatEmail = async (booking) => {
+    const formattedCheckInDate = exports.formatDate(booking.check_in_date);
+    const formattedCheckOutDate = exports.formatDate(booking.check_out_date);
     var textStatus = '';
     switch (booking.status) {
         case 'pending':
@@ -31,16 +33,16 @@ exports.formatEmail = async (booking) => {
                         ${textStatus}
                     </strong>
                     <br/> in our hotel.
-                    <strong>${booking.room_name}</strong>. 
+                    <strong>${booking.room_name}</strong>.<br/>
                     Your stay is scheduled from 
-                    <strong>${booking.check_in_date}</strong> to 
-                    <strong>${booking.check_out_date}</strong>.
+                    <strong>${formattedCheckInDate}</strong> to 
+                    <strong>${formattedCheckOutDate}</strong>.
                 </p>
                 <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                     <p><strong>Room Name:</strong> ${booking.room_name}</p>
-                    <p><strong>Check-in Date:</strong> ${booking.check_in_date}</p>
-                    <p><strong>Check-out Date:</strong> ${booking.check_out_date}</p>
-                    <p><strong>Total Price:</strong> ${booking.total_price}</p>
+                    <p><strong>Check-in Date:</strong> ${formattedCheckInDate}</p>
+                    <p><strong>Check-out Date:</strong> ${formattedCheckOutDate}</p>
+                    <p><strong>Total Price:</strong> ${booking.total_price} bath</p>
                 </div>
                 <p>Thank you for choosing our service! We are excited to welcome you soon.</p>
                 <p>If you have any questions, feel free to contact us via:</p>
@@ -51,4 +53,12 @@ exports.formatEmail = async (booking) => {
             </div>
         </div>
     `);
+};
+
+exports.formatDate = (date) => {
+    return new Date(date).toLocaleDateString('th-TH', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
 };
