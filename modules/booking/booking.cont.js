@@ -4,6 +4,7 @@ const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
 const { sendMail } = require('../../middleware/mailer');
 
+
 exports.getBooking = async (req, res) => {
     try {
         const booking = await Booking.find();
@@ -93,7 +94,6 @@ exports.updateBooking = async (req, res) => {
 exports.createBooking = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
     try {
         const {
             room_name,

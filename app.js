@@ -22,7 +22,7 @@ app.use(compression());
 const corsOptions = {
   origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Access-Token"]
 };
 
 app.use(cors(corsOptions));
