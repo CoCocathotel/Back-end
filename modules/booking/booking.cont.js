@@ -4,7 +4,6 @@ const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
 const { sendMail } = require('../../middleware/mailer');
 
-
 exports.getBooking = async (req, res) => {
     try {
         const booking = await Booking.find();
@@ -94,6 +93,7 @@ exports.updateBooking = async (req, res) => {
 exports.createBooking = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
+
     try {
         const {
             room_name,
@@ -219,23 +219,62 @@ exports.getAllEvent = async (req, res) => {
     }
 };
 
-// Change booking status and send email notification
 exports.changeStatus = async (req, res) => {
     const { id, status } = req.body;
 
     try {
+        // ค้นหา booking โดยใช้ ID
         const booking = await Booking.findById(id);
         if (!booking) {
             return res.status(404).send("Booking data not found");
         }
-        const updatedBooking = await Promise.all([
-            booking.save(),
-            sendMail(booking)
-        ]);
+        // อัปเดตสถานะของ booking
+        booking.status = status;
+
+        // บันทึกการเปลี่ยนแปลงสถานะในฐานข้อมูล
+        await booking.save();
+
+        // ส่งอีเมลแจ้งเตือนหลังจากบันทึกสำเร็จ
+        await sendMail(booking);
+
         res.status(200).json({
-            body: updatedBooking,
+            body: booking, // ส่งข้อมูล booking ที่อัปเดตแล้วกลับไปยัง frontend
         });
     } catch (error) {
         res.status(400).send(error.message);
     }
 };
+
+
+exports.getUserBookingEvent = async (req, res) => {
+    const { email } = req.params;
+
+    try {
+        // ดึงการจองของผู้ใช้จากฐานข้อมูลด้วยอีเมล
+        const bookings = await Booking.find({ email });
+
+        if (!bookings || bookings.length === 0) {
+            return res.status(404).send("No booking data found for this email");
+        }
+
+        // ดึงข้อมูลห้องจากฐานข้อมูล
+        const rooms = await Room.find();
+
+        // แมพข้อมูลให้แน่ใจว่าข้อมูลทุกส่วนถูกส่งกลับ
+        const bookingDetails = bookings.map((booking) => {
+            const correspondingRoom = rooms.find(room => room.type === booking.type);
+            return {
+                ...booking._doc,
+                imageRoom: correspondingRoom ? correspondingRoom.image : null,
+                roomDetails: correspondingRoom ? correspondingRoom.details : {},  // เพิ่มข้อมูลที่ต้องการ เช่นรายละเอียดห้อง
+            };
+        });
+
+        res.status(200).json({
+            body: bookingDetails,
+        });
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+

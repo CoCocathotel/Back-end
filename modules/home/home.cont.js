@@ -121,19 +121,15 @@ exports.updateHome = async (req, res) => {
       const oldLinkMap = home.mapImage;
       if (oldLinkMap !== null) {
         console.log("2 img");
-
         if (oldLinkMap != mapImage) {
           console.log("3 img");
-
           LinkMap = await Image.updateImage(mapImage, oldLinkMap, "map");
         } else {
           console.log("4 img");
-
           LinkMap = mapImage;
         }
       } else {
         console.log("5 img");
-
         LinkMap = await Image.uploadImage(mapImage, "map");
       }
 
