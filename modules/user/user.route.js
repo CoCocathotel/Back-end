@@ -7,5 +7,6 @@ router.post('/register', userCont.register);
 router.patch('/updateUser/:id', userCont.updateUser);
 router.get('/getUser/:id', userCont.getUser); // New route for getting user details
 router.patch('/changePassword/:id', userCont.changePassword);
+router.get('/checkEmailExists/:email', userCont.checkEmailExists);
 
 module.exports = router;

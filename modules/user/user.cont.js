@@ -134,3 +134,12 @@ exports.changePassword = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+exports.checkEmailExists = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const existingUser = await User.findOne({ email });
+    res.status(200).json({ exists: !!existingUser });
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+};
