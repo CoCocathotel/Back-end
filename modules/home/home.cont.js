@@ -25,6 +25,7 @@ exports.createHome = async (req, res) => {
     if (heroImage && heroImage.length > 0) {
       LinkHero = await Promise.all(heroImage.map((img) => Image.uploadImage(img, "home")));
     }
+  
 
     if (reviewImage && reviewImage.length > 0) {
       LinkReview = await Promise.all(reviewImage.map((img) => Image.uploadImage(img, "review")));

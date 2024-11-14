@@ -32,8 +32,8 @@ exports.sendMail = async (booking) => {
     
     const mailOptions = {
         from: process.env.EMAIL_USER,
+        // to: 'adisak.2457@gmail.com',
         to: booking.email,
-        // to:'adisak.2457@gmail.com' ,
         subject: emailSubject,
         html: emailText
     };

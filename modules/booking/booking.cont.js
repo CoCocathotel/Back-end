@@ -219,26 +219,28 @@ exports.getAllEvent = async (req, res) => {
     }
 };
 
+// Change booking status and send email notification
+// Change booking status and send email notification
 exports.changeStatus = async (req, res) => {
     const { id, status } = req.body;
 
     try {
-        // ค้นหา booking โดยใช้ ID
         const booking = await Booking.findById(id);
         if (!booking) {
             return res.status(404).send("Booking data not found");
         }
-        // อัปเดตสถานะของ booking
+
+        // Update status
         booking.status = status;
 
-        // บันทึกการเปลี่ยนแปลงสถานะในฐานข้อมูล
-        await booking.save();
+        await booking.save(); // Ensure this line saves the new status to the database
 
-        // ส่งอีเมลแจ้งเตือนหลังจากบันทึกสำเร็จ
+        // Optionally send an email
         await sendMail(booking);
 
         res.status(200).json({
-            body: booking, // ส่งข้อมูล booking ที่อัปเดตแล้วกลับไปยัง frontend
+            message: "Status updated successfully",
+            body: booking, // Send updated booking as the response
         });
     } catch (error) {
         res.status(400).send(error.message);
@@ -247,7 +249,7 @@ exports.changeStatus = async (req, res) => {
 
 
 exports.getUserBookingEvent = async (req, res) => {
-    const { email } = req.params;
+    const { email } = req.params; //req.body
 
     try {
         // ดึงการจองของผู้ใช้จากฐานข้อมูลด้วยอีเมล
