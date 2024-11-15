@@ -1,23 +1,45 @@
+require("dotenv").config();
+require("./config/database").connect();
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const bodyParser = require("body-parser");
+
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const app = express();
 
-// Configuration for CORS
+app.use(compression());
+
 const corsOptions = {
-  origin: '*', // กำหนดให้ทุกโดเมนสามารถเข้าถึงได้
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: ["Content-Type", "Authorization", "X-Access-Token"]
 };
 
-// Apply CORS middleware globally
+// ใช้ CORS middleware สำหรับทุก request
 app.use(cors(corsOptions));
 
-// ตัวเลือกพิเศษสำหรับ CORS
-app.options('*', cors(corsOptions));
+// การจัดการ OPTIONS requests
+app.options('*', (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Access-Token");
+  res.sendStatus(200);
+});
 
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json());
 
-// สุดท้าย โหลด route ของคุณ
 app.use(require('./router/router'));
 
 app.get("/*", (req, res) => {
