@@ -152,18 +152,7 @@ exports.createBooking = async (req, res) => {
         if (typeof total_cats === 'undefined' || total_cats === null) {
             throw new Error("total_cats is required");
         }
-
-        const roomData = await Room.findOne({ type });
-        if (!roomData) {
-            throw new Error("Room data not found");
-        }
         
-        // ตรวจสอบความพร้อมของจำนวนห้อง
-        if (roomData.number_of_rooms < total_rooms) {
-            throw new Error("Not enough rooms available");
-        }
-
-        const room_capacity = roomData.number_of_cats; // ความจุแมวสูงสุดในแต่ละห้อง
         let LinkSlip = '';
         if (image) {
             LinkSlip = await Image.uploadImage(image, "slip");
@@ -172,20 +161,17 @@ exports.createBooking = async (req, res) => {
         let total_cats_All = total_cats;
         let collect = [];
 
-        // การจัดสรรแมวลงห้องตามความจุของแต่ละห้อง
         for (let i = 0; i < total_rooms; i++) {
             if (total_cats_All > 0) {
-                const cats_in_room = Math.min(room_capacity, total_cats_All);
+                const cats_in_room = Math.min(1, total_cats_All);
                 collect.push(cats_in_room);
                 total_cats_All -= cats_in_room;
             } else {
                 collect.push(0);
             }
         }
-
-        // สร้างข้อมูลการจองแยกตามห้องที่แบ่งแมวลงไว้
         for (let i = 0; i < total_rooms; i++) {
-            await Booking.create([
+        await Booking.create([
                 {
                     room_name,
                     type,
@@ -199,7 +185,7 @@ exports.createBooking = async (req, res) => {
                     check_in_date,
                     check_out_date,
                     total_price,
-                    total_cats: collect[i], // จำนวนแมวในห้องนี้
+                    total_cats: collect[i],
                     total_rooms: 1,
                     status,
                     pay_way: pay_way ? pay_way : 'walk-in',
@@ -208,29 +194,31 @@ exports.createBooking = async (req, res) => {
                 }
             ], { session });
         }
-
-        // ลดจำนวนห้องในระบบหลังจากการจอง
-        roomData.number_of_rooms -= total_rooms;
-        await roomData.save({ session });
-
         await session.commitTransaction();
         session.endSession();
-
-        // แจ้งเตือนผู้ใช้ด้วยอีเมล
-        const updatedBooking = await sendMail({
-            room_name,
-            type,
-            email,
-            user_name,
-            check_in_date,
-            check_out_date,
-            total_price,
-            status,
-            pay_way,
-            total_cameras,
-        });
-
-        res.status(201).json({ message: "Booking created successfully", emailStatus: updatedBooking });
+        const updatedBooking = await Promise.all([
+            sendMail({
+                room_name,
+                type,
+                email,
+                user_name,
+                // phone,
+                // user_name_2,
+                // phone_2,
+                // special_request,
+                // optional_services,
+                check_in_date,
+                check_out_date,
+                total_price,
+                // total_cats,
+                // total_rooms,
+                status,
+                pay_way,
+                total_cameras,
+                // image,
+            })
+        ]);
+        res.status(201).json({ message: updatedBooking });
     } catch (err) {
         await session.abortTransaction();
         session.endSession();

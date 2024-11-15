@@ -19,8 +19,16 @@ const app = express();
 
 app.use(compression());
 
+const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+
 const corsOptions = {
-  origin: '*',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: ["Content-Type", "Authorization", "X-Access-Token"]
 };
@@ -33,7 +41,6 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json());
 
 app.use(require('./router/router'));
-
 
 app.get("/*", (req, res) => {
   res.send("Welcome to the API");
