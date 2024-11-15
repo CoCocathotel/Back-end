@@ -108,90 +108,87 @@ exports.createBooking = async (req, res) => {
             check_in_date,
             check_out_date,
             total_price,
-            total_cats,
-            total_rooms,
+            total_cats, // จำนวนแมวทั้งหมดที่ต้องการจอง
+            total_rooms, // จำนวนห้องทั้งหมดที่จอง
             status,
             pay_way,
             total_cameras,
             image,
         } = req.body;
 
-        if (typeof total_cats === 'undefined' || total_cats === null) {
-            throw new Error("total_cats is required");
+        // ตรวจสอบข้อมูลห้องจากฐานข้อมูล
+        const roomData = await Room.findOne({ type });
+        if (!roomData) {
+            throw new Error("Room data not found");
         }
-        
+
+        // ตรวจสอบว่ามีจำนวนห้องเพียงพอสำหรับการจอง
+        if (roomData.number_of_rooms < total_rooms) {
+            throw new Error("Not enough rooms available");
+        }
+
+        // อัปโหลดสลิปการโอนเงินถ้ามี
         let LinkSlip = '';
         if (image) {
             LinkSlip = await Image.uploadImage(image, "slip");
         }
 
-        let total_cats_All = total_cats;
-        let collect = [];
+        const room_capacity = roomData.number_of_cats; // ความจุแมวสูงสุดในแต่ละห้อง
 
+        let total_cats_All = total_cats;
+        let collect = []; // เก็บจำนวนแมวที่แบ่งลงในแต่ละห้อง
+
+        // แบ่งจำนวนแมวลงห้องตามความจุของแต่ละห้อง
         for (let i = 0; i < total_rooms; i++) {
             if (total_cats_All > 0) {
-                const cats_in_room = Math.min(1, total_cats_All);
+                const cats_in_room = Math.min(room_capacity, total_cats_All);
                 collect.push(cats_in_room);
                 total_cats_All -= cats_in_room;
             } else {
                 collect.push(0);
             }
         }
+
+        // สร้างข้อมูลการจองตามจำนวนแมวในแต่ละห้องที่แบ่งได้
         for (let i = 0; i < total_rooms; i++) {
-        await Booking.create([
-                {
-                    room_name,
-                    type,
-                    email,
-                    user_name,
-                    phone,
-                    user_name_2,
-                    phone_2,
-                    special_request,
-                    optional_services,
-                    check_in_date,
-                    check_out_date,
-                    total_price,
-                    total_cats: collect[i],
-                    total_rooms: 1,
-                    status,
-                    pay_way: pay_way ? pay_way : 'walk-in',
-                    total_cameras,
-                    image: LinkSlip,
-                }
-            ], { session });
-        }
-        await session.commitTransaction();
-        session.endSession();
-        const updatedBooking = await Promise.all([
-            sendMail({
+            await Booking.create([{
                 room_name,
                 type,
                 email,
                 user_name,
-                // phone,
-                // user_name_2,
-                // phone_2,
-                // special_request,
-                // optional_services,
+                phone,
+                user_name_2,
+                phone_2,
+                special_request,
+                optional_services,
                 check_in_date,
                 check_out_date,
                 total_price,
-                // total_cats,
-                // total_rooms,
+                total_cats: collect[i], // จำนวนแมวในห้องนี้
+                total_rooms: 1,
                 status,
-                pay_way,
+                pay_way: pay_way ? pay_way : 'walk-in',
                 total_cameras,
-                // image,
-            })
-        ]);
-        res.status(201).json({ message: updatedBooking });
+                image: LinkSlip,
+            }], { session });
+        }
+
+        // ลดจำนวนห้องที่เหลือหลังการจองสำเร็จ
+        roomData.number_of_rooms -= total_rooms;
+        await roomData.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(201).json({ message: "Booking created successfully" });
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
         res.status(500).json({ message: "Failed to create booking", error: err.message });
     }
 };
+
+
 
 // Get all booking events
 exports.getAllEvent = async (req, res) => {
