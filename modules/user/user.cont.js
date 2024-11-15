@@ -1,9 +1,6 @@
 const { User } = require('../../middleware/db');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
-
 
 exports.login = async (req, res) => {
   try {
@@ -114,7 +111,7 @@ exports.changePassword = async (req, res) => {
     const { old_password, new_password } = req.body;
 
     // Find user by ID
-    const user = await User.findById(id); 
+    const user = await User.findById(id);
     if (!user) {
       return res.status(404).send("User not found");
     }
@@ -142,78 +139,6 @@ exports.checkEmailExists = async (req, res) => {
     const { email } = req.params;
     const existingUser = await User.findOne({ email });
     res.status(200).json({ exists: !!existingUser });
-  } catch (error) {
-    res.status(500).send("Server error");
-  }
-};
-
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-
-    // Generate a reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // Token valid for 1 hour
-    await user.save();
-
-    // Send reset email
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      to: user.email,
-      from: process.env.EMAIL_USER,
-      subject: "Password Reset",
-      text: `You are receiving this because you (or someone else) have requested to reset your password.\n\n
-             Please click on the following link, or paste this into your browser to complete the process within one hour:\n\n
-             ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\n
-             If you did not request this, please ignore this email and your password will remain unchanged.\n`,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return res.status(500).send("Error sending email");
-      }
-      res.status(200).send("Reset password email sent");
-    });
-  } catch (error) {
-    res.status(500).send("Server error");
-  }
-};
-
-exports.resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { new_password } = req.body;
-
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      return res.status(400).send("Password reset token is invalid or has expired");
-    }
-
-    // Encrypt the new password
-    const encryptedPassword = await bcrypt.hash(new_password, 10);
-    user.password = encryptedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
-
-    res.status(200).send("Password has been updated");
   } catch (error) {
     res.status(500).send("Server error");
   }

@@ -90,39 +90,6 @@ exports.updateBooking = async (req, res) => {
 };
 
 // Create a new booking
-// ฟังก์ชันอัพเดทข้อมูลการจองที่มีอยู่แล้ว
-exports.updateBooking = async (req, res) => {
-    try {
-        const { user_name_2, phone_2, special_request, pay_way, image } = req.body;
-        const { id } = req.params;
-
-        const booking = await Booking.findById(id);
-        if (!booking) {
-            return res.status(404).send("Booking data not found");
-        }
-
-        let LinkImage = booking.image;
-        if (image) {
-            LinkImage = await Image.uploadImage(image, "slip");
-        }
-
-        booking.user_name_2 = user_name_2;
-        booking.phone_2 = phone_2;
-        booking.special_request = special_request;
-        booking.pay_way = pay_way;
-        booking.image = LinkImage;
-
-        await booking.save();
-
-        res.status(200).json({
-            body: booking,
-        });
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-};
-
-// ฟังก์ชันสร้างการจองใหม่
 exports.createBooking = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -226,7 +193,6 @@ exports.createBooking = async (req, res) => {
     }
 };
 
-
 // Get all booking events
 exports.getAllEvent = async (req, res) => {
     try {
@@ -313,3 +279,4 @@ exports.getUserBookingEvent = async (req, res) => {
         res.status(400).send(error.message);
     }
 };
+
