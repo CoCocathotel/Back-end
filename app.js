@@ -20,7 +20,7 @@ app.use(compression());
 
 // Middleware to set CORS headers manually
 app.use((req, res, next) => {
-  const allowedOrigins = ['https://cococatfrontend.vercel.app', 'http://localhost:3000'];
+  const allowedOrigins = ['https://cococatbackend.vercel.app', 'http://localhost:3000'];
   const origin = req.headers.origin;
 
   if (allowedOrigins.includes(origin)) {
