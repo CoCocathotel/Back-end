@@ -125,20 +125,37 @@ exports.createBooking = async (req, res) => {
             LinkSlip = await Image.uploadImage(image, "slip");
         }
 
-        let total_cats_All = total_cats;
-        let collect = [];
+        // คำนวณการกระจายแมวให้ลงตัวในแต่ละห้อง
+        const cats_per_room = Math.floor(total_cats / total_rooms); // จำนวนแมวที่ใส่ได้เท่ากันในแต่ละห้อง
+        let remainder_cats = total_cats % total_rooms; // แมวที่เหลือหลังจากการแบ่งเท่ากันในแต่ละห้อง
+        let collect_cats = [];
 
         for (let i = 0; i < total_rooms; i++) {
-            if (total_cats_All > 0) {
-                const cats_in_room = Math.min(1, total_cats_All);
-                collect.push(cats_in_room);
-                total_cats_All -= cats_in_room;
+            if (remainder_cats > 0) {
+                collect_cats.push(cats_per_room + 1);
+                remainder_cats--;
             } else {
-                collect.push(0);
+                collect_cats.push(cats_per_room);
             }
         }
+
+        // คำนวณการกระจายกล้องให้ลงตัวในแต่ละห้อง
+        const cameras_per_room = Math.floor(total_cameras / total_rooms); // จำนวนกล้องที่ใส่ได้เท่ากันในแต่ละห้อง
+        let remainder_cameras = total_cameras % total_rooms; // กล้องที่เหลือหลังจากการแบ่งเท่ากันในแต่ละห้อง
+        let collect_cameras = [];
+
         for (let i = 0; i < total_rooms; i++) {
-        await Booking.create([
+            if (remainder_cameras > 0) {
+                collect_cameras.push(cameras_per_room + 1);
+                remainder_cameras--;
+            } else {
+                collect_cameras.push(cameras_per_room);
+            }
+        }
+
+        // สร้างการจองสำหรับแต่ละห้อง
+        for (let i = 0; i < total_rooms; i++) {
+            await Booking.create([
                 {
                     room_name,
                     type,
@@ -152,39 +169,34 @@ exports.createBooking = async (req, res) => {
                     check_in_date,
                     check_out_date,
                     total_price,
-                    total_cats: collect[i],
+                    total_cats: collect_cats[i],
                     total_rooms: 1,
                     status,
                     pay_way: pay_way ? pay_way : 'walk-in',
-                    total_cameras,
+                    total_cameras: collect_cameras[i],
                     image: LinkSlip,
                 }
             ], { session });
         }
+
         await session.commitTransaction();
         session.endSession();
+
         const updatedBooking = await Promise.all([
             sendMail({
                 room_name,
                 type,
                 email,
                 user_name,
-                // phone,
-                // user_name_2,
-                // phone_2,
-                // special_request,
-                // optional_services,
                 check_in_date,
                 check_out_date,
                 total_price,
-                // total_cats,
-                // total_rooms,
                 status,
                 pay_way,
                 total_cameras,
-                // image,
             })
         ]);
+
         res.status(201).json({ message: updatedBooking });
     } catch (err) {
         await session.abortTransaction();
