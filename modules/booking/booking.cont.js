@@ -4,14 +4,12 @@ const Image = require('../../middleware/superbase');
 const mongoose = require('mongoose');
 const { sendMail } = require('../../middleware/mailer');
 
+// Get all bookings
 exports.getBooking = async (req, res) => {
     try {
         const booking = await Booking.find();
-        if (!booking || booking.length === 0) {
-            return res.status(404).send("Booking data not found");
-        }
         res.status(200).json({
-            body: booking,
+            body: booking.length > 0 ? booking : [], // ส่งกลับเป็น [] แทนเมื่อไม่มีข้อมูล
         });
     } catch (error) {
         res.status(400).send(error.message);
@@ -182,20 +180,18 @@ exports.createBooking = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        const updatedBooking = await Promise.all([
-            sendMail({
-                room_name,
-                type,
-                email,
-                user_name,
-                check_in_date,
-                check_out_date,
-                total_price,
-                status,
-                pay_way,
-                total_cameras,
-            })
-        ]);
+        const updatedBooking = await Promise.all([sendMail({
+            room_name,
+            type,
+            email,
+            user_name,
+            check_in_date,
+            check_out_date,
+            total_price,
+            status,
+            pay_way,
+            total_cameras,
+        })]);
 
         res.status(201).json({ message: updatedBooking });
     } catch (err) {
@@ -211,10 +207,6 @@ exports.getAllEvent = async (req, res) => {
         const bookings = await Booking.find();
         const rooms = await Room.find();
 
-        if (!bookings || bookings.length === 0) {
-            return res.status(404).send("Booking data not found");
-        }
-
         const bookingDetails = bookings.map((booking) => {
             const correspondingRoom = rooms.find(room => room.type === booking.type);
             return {
@@ -224,14 +216,13 @@ exports.getAllEvent = async (req, res) => {
         });
 
         res.status(200).json({
-            body: bookingDetails,
+            body: bookingDetails.length > 0 ? bookingDetails : [], // ส่งกลับเป็น [] แทนเมื่อไม่มีข้อมูล
         });
     } catch (error) {
         res.status(400).send(error.message);
     }
 };
 
-// Change booking status and send email notification
 // Change booking status and send email notification
 exports.changeStatus = async (req, res) => {
     const { id, status } = req.body;
@@ -258,7 +249,6 @@ exports.changeStatus = async (req, res) => {
         res.status(400).send(error.message);
     }
 };
-
 
 exports.getUserBookingEvent = async (req, res) => {
     const { email } = req.params; //req.body
@@ -291,4 +281,3 @@ exports.getUserBookingEvent = async (req, res) => {
         res.status(400).send(error.message);
     }
 };
-
