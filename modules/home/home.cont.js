@@ -70,24 +70,24 @@ exports.updateHome = async (req, res) => {
     let oldLinkReview = home.reviewImage.filter((img) => !reviewImage.includes(img));
     let reviewImageNew = reviewImage.filter((img) => !home.reviewImage.includes(img));
 
-    if (oldLinkReview.length > 0 && reviewImageNew.length <= 0) {
+    if (oldLinkReview.length > 0 && reviewImageNew.length <= 0) { //ตรวจสอบ oldlink ถ้ามี oldlink แล้วไม่มี reviewImageNew จากนั้นจะทำการลบรูปจาก oldlink
       console.log("0", oldLinkReview);
-      LinkReview = await Promise.all(oldLinkReview.map((img, index) => Image.deleteImage(img, "review")));
-      LinkReview = home.reviewImage.filter((img) => !oldLinkReview.includes(img));
-    } else if (oldLinkReview.length > 0 && reviewImageNew.length > 0) {
+      LinkReview = await Promise.all(oldLinkReview.map((img, index) => Image.deleteImage(img, "review"))); //ลบรูปจาก supabase
+      LinkReview = home.reviewImage.filter((img) => !oldLinkReview.includes(img)); //นำรูปที่ไม่มี oldlink ออก
+    } else if (oldLinkReview.length > 0 && reviewImageNew.length > 0) { //ตรวจสอบ oldlink ถ้ามี oldlink แล้วมี reviewImageNew จากนั้นจะทำการลบรูปจาก oldlink แล้ว upload รูปใหม่เข้าไป
       LinkReview = await Promise.all(oldLinkReview.map((img, index) => Image.deleteImage(img, "review")));
       LinkReview = await Promise.all(reviewImageNew.map((img, index) => Image.uploadImage(img, "review")));
-      notIncludeOld = home.reviewImage.filter((img) => !oldLinkReview.includes(img));
-      LinkReview = [...notIncludeOld, ...LinkReview];
-    } else if (oldLinkReview.length > 0) {
+      notIncludeOld = home.reviewImage.filter((img) => !oldLinkReview.includes(img)); //"[1,2,3,4,5] => [4,5]"
+      LinkReview = [...notIncludeOld, ...LinkReview]; // [[4,5],[6,7,8]] => [4,5,6,7,8]
+    } else if (oldLinkReview.length > 0) {        //update รูปที่มีอยู่เดิมโดยที่จำนวนรูปเก่ามีอยู่เท่าเดิม
       console.log("1", LinkReview, reviewImage, oldLinkReview);
       LinkReview = await Promise.all(reviewImageNew.map((img, index) => Image.updateImage(img, oldLinkReview[index], "review")));
-    } else if (reviewImageNew.length > 0) {
+    } else if (reviewImageNew.length > 0) {      //upload รูปเพิ่มโดยไม่มีการลบรูปเดิม
       console.log("2", LinkReview, reviewImage, oldLinkReview);
 
       LinkReview = await Promise.all(reviewImageNew.map((img) => Image.uploadImage(img, "review")));
       LinkReview = [...home.reviewImage, ...LinkReview];
-    } else {
+    } else {          //ไม่มีการทำอะไรเลย
       console.log("3", LinkReview, reviewImage, oldLinkReview);
 
       LinkReview = home.reviewImage
@@ -117,19 +117,19 @@ exports.updateHome = async (req, res) => {
       LinkHero = home.heroImage
     }
 
-    if (mapImage) {
+    if (mapImage) {          //ถ้ามี mapimage เข้ามาจะไปเข้า122ถ้า 
       console.log("1 img");
       const oldLinkMap = home.mapImage;
       if (oldLinkMap !== null) {
-        console.log("2 img");
-        if (oldLinkMap != mapImage) {
+        console.log("2 img"); 
+        if (oldLinkMap != mapImage) {        //ถ้ามีรูปใหม่มาก็เอาไปแทนรูปเก่า
           console.log("3 img");
           LinkMap = await Image.updateImage(mapImage, oldLinkMap, "map");
-        } else {
+        } else {                          //ถ้ารูปเดิม=รูปเก่าก็ใช้รูปเดิม
           console.log("4 img");
           LinkMap = mapImage;
         }
-      } else {
+      } else {                           //ถ้าไม่มีรูปก็ upload เข้าไปใหม่
         console.log("5 img");
         LinkMap = await Image.uploadImage(mapImage, "map");
       }
